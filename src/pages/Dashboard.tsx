@@ -3,19 +3,18 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Users, Clock, Settings, LogOut, Plus, Copy, Star, Shield } from "lucide-react";
+import { Calendar, Users, Clock, Settings, LogOut, Plus, Copy, Star, Shield, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import RevenueCard from "@/components/RevenueCard";
+import AppointmentStatsCard from "@/components/AppointmentStatsCard";
 
 const Dashboard = () => {
   const { user, profile, signOut, loading: authLoading } = useAuth();
   const { isAdmin } = useAdminCheck();
   const [appointments, setAppointments] = useState([]);
-  const [todayCount, setTodayCount] = useState(0);
-  const [weekCount, setWeekCount] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -40,10 +39,6 @@ const Dashboard = () => {
 
     try {
       const today = new Date().toISOString().split('T')[0];
-      const weekStart = new Date();
-      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekEnd.getDate() + 6);
 
       // Get recent appointments
       const { data: recentAppointments, error: recentError } = await (supabase as any)
@@ -58,25 +53,6 @@ const Dashboard = () => {
       if (!recentError && recentAppointments) {
         setAppointments(recentAppointments);
       }
-
-      // Count today's appointments
-      const { count: todayCountResult } = await (supabase as any)
-        .from('appointments')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('appointment_date', today);
-
-      setTodayCount(todayCountResult || 0);
-
-      // Count week's appointments
-      const { count: weekCountResult } = await (supabase as any)
-        .from('appointments')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .gte('appointment_date', weekStart.toISOString().split('T')[0])
-        .lte('appointment_date', weekEnd.toISOString().split('T')[0]);
-
-      setWeekCount(weekCountResult || 0);
     } catch (error) {
       console.error('Error fetching appointments:', error);
     }
@@ -204,39 +180,25 @@ const Dashboard = () => {
             Olá, {profile.name}! 👋
           </h2>
           <p className="text-gray-600 dark:text-gray-400">
-            Aqui está um resumo dos seus agendamentos para hoje ({today})
+            Aqui está um resumo dos seus agendamentos e faturamento
           </p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="border-l-4 border-l-blue-600">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Agendamentos Hoje
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-800 dark:text-white">{todayCount}</div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Total para hoje
-              </p>
-            </CardContent>
-          </Card>
+          <AppointmentStatsCard 
+            type="today"
+            title="Agendamentos Hoje"
+            borderColor="border-l-blue-600"
+            icon={<Calendar className="h-5 w-5 text-blue-600" />}
+          />
 
-          <Card className="border-l-4 border-l-green-600">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Esta Semana
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-800 dark:text-white">{weekCount}</div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Total da semana
-              </p>
-            </CardContent>
-          </Card>
+          <AppointmentStatsCard 
+            type="week"
+            title="Esta Semana"
+            borderColor="border-l-green-600"
+            icon={<Users className="h-5 w-5 text-green-600" />}
+          />
 
           <RevenueCard />
 
