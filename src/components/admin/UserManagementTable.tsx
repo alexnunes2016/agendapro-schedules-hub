@@ -1,29 +1,18 @@
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
+import { UserActions } from "./UserActions";
+import { UserPlanSelect } from "./UserPlanSelect";
 import { useUserManagement } from "@/hooks/useUserManagement";
-import UserTableFilters from "./UserTableFilters";
-import UserPlanSelect from "./UserPlanSelect";
-import UserActions from "./UserActions";
+import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 
-const UserManagementTable = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [planFilter, setPlanFilter] = useState("all");
+interface UserManagementTableProps {
+  filteredUsers: any[];
+}
+
+export const UserManagementTable = ({ filteredUsers }: UserManagementTableProps) => {
   const { isSuperAdmin } = useSuperAdminCheck();
   const {
-    users,
-    loading,
     updateUserPlan,
     toggleUserStatus,
     sendNotification,
@@ -33,139 +22,96 @@ const UserManagementTable = () => {
     deleteUser,
   } = useUserManagement();
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPlan = planFilter === "all" || user.plan === planFilter;
-    return matchesSearch && matchesPlan;
-  });
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center">Carregando usuários...</div>
-        </CardContent>
-      </Card>
+  const getStatusBadge = (isActive: boolean) => {
+    return isActive ? (
+      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Ativo</Badge>
+    ) : (
+      <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Inativo</Badge>
     );
-  }
+  };
+
+  const getPlanBadge = (plan: string) => {
+    const planColors = {
+      free: "bg-gray-100 text-gray-800",
+      basico: "bg-blue-100 text-blue-800", 
+      profissional: "bg-purple-100 text-purple-800",
+      premium: "bg-yellow-100 text-yellow-800"
+    };
+    
+    return (
+      <Badge className={`${planColors[plan as keyof typeof planColors] || planColors.free} hover:bg-current`}>
+        {plan === 'free' ? '14 dias teste' : plan}
+      </Badge>
+    );
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <span>Gerenciamento de Usuários</span>
-          <Badge variant="secondary">{filteredUsers.length} usuários</Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <UserTableFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          planFilter={planFilter}
-          setPlanFilter={setPlanFilter}
-        />
-
-        <div className="rounded-md border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Plano</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Email Confirmado</TableHead>
-                <TableHead>Expiração do Plano</TableHead>
-                <TableHead>Criado em</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">
-                    <div>
-                      <div className="font-semibold">{user.name}</div>
-                      {user.clinic_name && (
-                        <div className="text-sm text-gray-500">{user.clinic_name}</div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <UserPlanSelect
-                      currentPlan={user.plan}
-                      onPlanChange={(newPlan) => updateUserPlan(user.id, newPlan)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={user.role === 'admin' ? 'destructive' : 'secondary'}>
-                      {user.role === 'admin' ? 'Admin' : 'Usuário'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        checked={user.is_active}
-                        onCheckedChange={(checked) => toggleUserStatus(user.id, user.is_active, user.name)}
-                      />
-                      <span className={`text-sm ${user.is_active ? 'text-green-600' : 'text-red-600'}`}>
-                        {user.is_active ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={user.email_confirmed ? 'default' : 'secondary'}>
-                      {user.email_confirmed ? 'Confirmado' : 'Pendente'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {user.plan_expires_at ? (
-                      <span className="text-sm">
-                        {new Date(user.plan_expires_at).toLocaleDateString('pt-BR')}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-gray-400">Sem expiração</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <UserActions
-                      userId={user.id}
-                      userName={user.name}
-                      userEmail={user.email}
-                      emailConfirmed={user.email_confirmed}
-                      onSendNotification={sendNotification}
-                      onToggleStatus={toggleUserStatus}
-                      onDeleteUser={(userId, userName) => deleteUser(userId, userName, isSuperAdmin)}
-                      onResetPassword={resetPassword}
-                      onToggleEmailConfirmation={toggleEmailConfirmation}
-                      onEditPlanExpiration={editPlanExpiration}
-                      isSuperAdmin={isSuperAdmin}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        {filteredUsers.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            <p>Nenhum usuário encontrado</p>
-            {users.length === 0 && (
-              <p className="text-sm mt-2">
-                Se você é admin e não vê usuários, verifique as permissões RLS no Supabase
-              </p>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nome</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Plano</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Email Confirmado</TableHead>
+            <TableHead>Criado em</TableHead>
+            <TableHead>Expira em</TableHead>
+            <TableHead>Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredUsers.map((user: any) => (
+            <TableRow key={user.id}>
+              <TableCell className="font-medium">{user.name}</TableCell>
+              <TableCell>{user.email}</TableCell>
+              <TableCell>
+                <UserPlanSelect
+                  currentPlan={user.plan}
+                  onPlanChange={(newPlan) => updateUserPlan(user.id, newPlan)}
+                />
+              </TableCell>
+              <TableCell>{getStatusBadge(user.is_active)}</TableCell>
+              <TableCell>
+                <Badge variant={user.email_confirmed ? "default" : "secondary"}>
+                  {user.email_confirmed ? "Sim" : "Não"}
+                </Badge>
+              </TableCell>
+              <TableCell>{formatDate(user.created_at)}</TableCell>
+              <TableCell>{formatDate(user.plan_expires_at)}</TableCell>
+              <TableCell>
+                <UserActions
+                  user={user}
+                  onToggleStatus={(userId, currentStatus, userName) => 
+                    toggleUserStatus(userId, currentStatus, userName)
+                  }
+                  onSendNotification={(userId, userName) => 
+                    sendNotification(userId, userName)
+                  }
+                  onResetPassword={(userId, userName) => 
+                    resetPassword(userId, userName)
+                  }
+                  onToggleEmailConfirmation={(userId, userName, currentStatus) =>
+                    toggleEmailConfirmation(userId, userName, currentStatus)
+                  }
+                  onEditPlanExpiration={(userId, userName) =>
+                    editPlanExpiration(userId, userName)
+                  }
+                  onDeleteUser={(userId, userName) =>
+                    deleteUser(userId, userName, isSuperAdmin)
+                  }
+                  isSuperAdmin={isSuperAdmin}
+                />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
-
-export default UserManagementTable;
