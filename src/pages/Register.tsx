@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -22,7 +23,7 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signUp } = useAuth();
+  const { signUp, user, loading: authLoading } = useAuth();
 
   const serviceTypes = [
     { value: "medicina", label: "Medicina" },
@@ -32,6 +33,13 @@ const Register = () => {
     { value: "barbearia", label: "Barbearia" },
     { value: "outros", label: "Outros" }
   ];
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate("/dashboard");
+    }
+  }, [user, authLoading, navigate]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +79,11 @@ const Register = () => {
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  // Don't render register form if user is already authenticated
+  if (!authLoading && user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -164,7 +177,7 @@ const Register = () => {
             <Button 
               type="submit" 
               className="w-full bg-blue-600 hover:bg-blue-700"
-              disabled={isLoading || !formData.serviceType}
+              disabled={isLoading || !formData.serviceType || authLoading}
             >
               {isLoading ? "Criando conta..." : "Criar conta"}
             </Button>

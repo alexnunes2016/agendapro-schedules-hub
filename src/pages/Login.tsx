@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -16,7 +17,14 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn } = useAuth();
+  const { signIn, user, loading: authLoading } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate("/dashboard");
+    }
+  }, [user, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +44,7 @@ const Login = () => {
           title: "Login realizado com sucesso!",
           description: "Bem-vindo ao AgendoPro",
         });
-        navigate("/dashboard");
+        // Navigation will be handled by useEffect when user state updates
       }
     } catch (error) {
       toast({
@@ -48,6 +56,11 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
+  // Don't render login form if user is already authenticated
+  if (!authLoading && user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -103,7 +116,7 @@ const Login = () => {
             <Button 
               type="submit" 
               className="w-full bg-blue-600 hover:bg-blue-700"
-              disabled={isLoading}
+              disabled={isLoading || authLoading}
             >
               {isLoading ? "Entrando..." : "Entrar"}
             </Button>

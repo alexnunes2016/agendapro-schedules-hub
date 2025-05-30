@@ -9,19 +9,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const Services = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Only redirect if auth is fully loaded and user is not authenticated
   useEffect(() => {
-    if (!user) {
+    if (!authLoading && !user) {
+      console.log('Redirecting to login from Services - user not authenticated');
       navigate("/login");
-      return;
     }
-    fetchServices();
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    // Only fetch services when we have a user and auth is loaded
+    if (!authLoading && user) {
+      fetchServices();
+    }
+  }, [user, authLoading]);
 
   const fetchServices = async () => {
     if (!user) return;
@@ -76,10 +83,18 @@ const Services = () => {
     }
   };
 
-  if (loading) {
-    return <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-      <div>Carregando...</div>
-    </div>;
+  // Show loading while auth is loading or services are loading
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-lg">Carregando...</div>
+      </div>
+    );
+  }
+
+  // Don't render if no user (will redirect)
+  if (!user) {
+    return null;
   }
 
   return (

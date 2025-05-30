@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, loading: authLoading } = useAuth();
   const { isAdmin } = useAdminCheck();
   const [appointments, setAppointments] = useState([]);
   const [todayCount, setTodayCount] = useState(0);
@@ -18,14 +19,20 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Only redirect to login if auth is fully loaded and user is definitely not authenticated
   useEffect(() => {
-    if (!user) {
+    if (!authLoading && !user) {
+      console.log('Redirecting to login - user not authenticated');
       navigate("/login");
-      return;
     }
-    
-    fetchAppointments();
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    // Only fetch appointments when we have a user and auth is loaded
+    if (!authLoading && user) {
+      fetchAppointments();
+    }
+  }, [user, authLoading]);
 
   const fetchAppointments = async () => {
     if (!user) return;
@@ -112,8 +119,18 @@ const Dashboard = () => {
     );
   };
 
+  // Show loading while auth is loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-lg">Carregando...</div>
+      </div>
+    );
+  }
+
+  // Don't render anything if no user (will redirect)
   if (!user || !profile) {
-    return <div>Carregando...</div>;
+    return null;
   }
 
   const today = new Date().toLocaleDateString('pt-BR');
