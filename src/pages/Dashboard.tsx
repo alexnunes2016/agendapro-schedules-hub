@@ -1,0 +1,260 @@
+
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, Users, Clock, Settings, LogOut, Plus, Copy, Star } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+const Dashboard = () => {
+  const [user, setUser] = useState<any>(null);
+  const [darkMode, setDarkMode] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const userData = localStorage.getItem("agendopro_user");
+    if (!userData) {
+      navigate("/login");
+      return;
+    }
+    setUser(JSON.parse(userData));
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("agendopro_user");
+    navigate("/");
+    toast({
+      title: "Logout realizado",
+      description: "Você foi desconectado com sucesso",
+    });
+  };
+
+  const copyPublicLink = () => {
+    const publicLink = `${window.location.origin}/booking/${user?.id}`;
+    navigator.clipboard.writeText(publicLink);
+    toast({
+      title: "Link copiado!",
+      description: "Link público de agendamento copiado para a área de transferência",
+    });
+  };
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+    document.documentElement.classList.toggle('dark');
+  };
+
+  if (!user) {
+    return <div>Carregando...</div>;
+  }
+
+  const today = new Date().toLocaleDateString('pt-BR');
+  const todayAppointments = 3; // Simulação
+  const weekAppointments = 12; // Simulação
+
+  return (
+    <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 ${darkMode ? 'dark' : ''}`}>
+      {/* Header */}
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Calendar className="h-8 w-8 text-blue-600" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">AgendoPro</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{user.clinic}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleDarkMode}
+                className="text-gray-600 dark:text-gray-300"
+              >
+                {darkMode ? '☀️' : '🌙'}
+              </Button>
+              
+              {user.plan === 'free' && (
+                <Link to="/upgrade">
+                  <Button variant="outline" className="border-yellow-500 text-yellow-600 hover:bg-yellow-50">
+                    <Star className="h-4 w-4 mr-2" />
+                    Upgrade
+                  </Button>
+                </Link>
+              )}
+              
+              <Button onClick={copyPublicLink} variant="outline" className="hidden sm:flex">
+                <Copy className="h-4 w-4 mr-2" />
+                Copiar Link Público
+              </Button>
+              
+              <Link to="/settings">
+                <Button variant="ghost" size="sm">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </Link>
+              
+              <Button onClick={handleLogout} variant="ghost" size="sm" className="text-red-600">
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="p-6">
+        {/* Welcome Section */}
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
+            Olá, {user.name}! 👋
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Aqui está um resumo dos seus agendamentos para hoje ({today})
+          </p>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="border-l-4 border-l-blue-600">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Agendamentos Hoje
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-800 dark:text-white">{todayAppointments}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                +2 comparado a ontem
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-green-600">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Esta Semana
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-800 dark:text-white">{weekAppointments}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                +8% comparado à semana passada
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-purple-600">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Plano Atual
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-800 dark:text-white capitalize">{user.plan}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {user.plan === 'free' ? '7 dias restantes' : 'Ativo'}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Link to="/appointments">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="text-center">
+                <Calendar className="h-12 w-12 text-blue-600 mx-auto mb-2" />
+                <CardTitle className="text-lg">Agendamentos</CardTitle>
+                <CardDescription>Visualizar e gerenciar agendamentos</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link to="/clients">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="text-center">
+                <Users className="h-12 w-12 text-green-600 mx-auto mb-2" />
+                <CardTitle className="text-lg">Clientes</CardTitle>
+                <CardDescription>Lista de clientes e histórico</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link to="/services">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="text-center">
+                <Clock className="h-12 w-12 text-purple-600 mx-auto mb-2" />
+                <CardTitle className="text-lg">Serviços</CardTitle>
+                <CardDescription>Configurar serviços e horários</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          {(user.serviceType === 'medicina' || user.serviceType === 'odontologia') && (
+            <Link to="/medical-records">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader className="text-center">
+                  <Settings className="h-12 w-12 text-red-600 mx-auto mb-2" />
+                  <CardTitle className="text-lg">Prontuários</CardTitle>
+                  <CardDescription>Prontuários médicos digitais</CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+          )}
+        </div>
+
+        {/* Recent Appointments */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Próximos Agendamentos</CardTitle>
+              <Link to="/appointments">
+                <Button variant="outline" size="sm">
+                  Ver todos
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Simulação de agendamentos */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div>
+                  <p className="font-medium text-gray-800 dark:text-white">Maria Silva</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Limpeza dental - 14:00</p>
+                </div>
+                <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                  Confirmado
+                </span>
+              </div>
+              
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div>
+                  <p className="font-medium text-gray-800 dark:text-white">João Santos</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Consulta - 15:30</p>
+                </div>
+                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                  Pendente
+                </span>
+              </div>
+              
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div>
+                  <p className="font-medium text-gray-800 dark:text-white">Ana Costa</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Corte de cabelo - 16:00</p>
+                </div>
+                <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                  Confirmado
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
