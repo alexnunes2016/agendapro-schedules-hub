@@ -40,8 +40,7 @@ const Index = () => {
         "Agendamentos ilimitados",
         "Lembretes automáticos"
       ],
-      checkoutUrl: "https://kiwify.com.br/checkout/BASIC_PLAN_ID", // Substitua pelo ID real do produto
-      popular: true
+      checkoutUrl: "https://pay.kiwify.com.br/dIQXZeM"
     },
     {
       name: "Profissional",
@@ -53,7 +52,8 @@ const Index = () => {
         "Prontuário digital",
         "Atestados médicos"
       ],
-      checkoutUrl: "https://kiwify.com.br/checkout/PROFESSIONAL_PLAN_ID" // Substitua pelo ID real do produto
+      checkoutUrl: "https://pay.kiwify.com.br/ChhN5ug",
+      popular: true
     },
     {
       name: "Premium",
@@ -65,7 +65,7 @@ const Index = () => {
         "Relatórios avançados",
         "Suporte prioritário"
       ],
-      checkoutUrl: "https://kiwify.com.br/checkout/PREMIUM_PLAN_ID" // Substitua pelo ID real do produto
+      checkoutUrl: "https://pay.kiwify.com.br/GasXHJx"
     }
   ];
 
