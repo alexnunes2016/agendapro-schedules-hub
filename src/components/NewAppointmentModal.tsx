@@ -26,14 +26,30 @@ export const NewAppointmentModal = ({ onAppointmentCreated }: NewAppointmentModa
   const [notes, setNotes] = useState("");
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  // Horários base disponíveis
+  const baseAvailableSlots = [
+    "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+    "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"
+  ];
 
   useEffect(() => {
     if (open && user) {
       fetchServices();
     }
   }, [open, user]);
+
+  // Carregar horários ocupados quando a data for selecionada
+  useEffect(() => {
+    if (appointmentDate && user) {
+      fetchBookedSlots(appointmentDate);
+    } else {
+      setBookedSlots([]);
+    }
+  }, [appointmentDate, user]);
 
   const fetchServices = async () => {
     try {
@@ -47,6 +63,27 @@ export const NewAppointmentModal = ({ onAppointmentCreated }: NewAppointmentModa
       setServices(data || []);
     } catch (error) {
       console.error('Error fetching services:', error);
+    }
+  };
+
+  const fetchBookedSlots = async (selectedDate: string) => {
+    try {
+      const { data: appointments, error } = await supabase
+        .from('appointments')
+        .select('appointment_time')
+        .eq('user_id', user?.id)
+        .eq('appointment_date', selectedDate)
+        .in('status', ['confirmed', 'pending']);
+
+      if (error) {
+        console.error('Erro ao buscar agendamentos:', error);
+        return;
+      }
+
+      const bookedTimes = appointments?.map(apt => apt.appointment_time) || [];
+      setBookedSlots(bookedTimes);
+    } catch (error) {
+      console.error('Erro ao carregar horários ocupados:', error);
     }
   };
 
@@ -135,6 +172,9 @@ export const NewAppointmentModal = ({ onAppointmentCreated }: NewAppointmentModa
     }
   };
 
+  // Filtrar horários disponíveis removendo os já ocupados
+  const availableSlots = baseAvailableSlots.filter(slot => !bookedSlots.includes(slot));
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -210,13 +250,39 @@ export const NewAppointmentModal = ({ onAppointmentCreated }: NewAppointmentModa
           
           <div className="space-y-2">
             <Label htmlFor="time">Horário</Label>
-            <Input
-              id="time"
-              type="time"
-              value={appointmentTime}
-              onChange={(e) => setAppointmentTime(e.target.value)}
-              required
-            />
+            {appointmentDate ? (
+              <div>
+                {availableSlots.length === 0 ? (
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      Não há horários disponíveis para esta data.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {availableSlots.map((slot) => (
+                      <Button
+                        key={slot}
+                        type="button"
+                        variant={appointmentTime === slot ? "default" : "outline"}
+                        onClick={() => setAppointmentTime(slot)}
+                        className="text-sm h-10"
+                      >
+                        {slot}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Input
+                id="time"
+                type="time"
+                value={appointmentTime}
+                onChange={(e) => setAppointmentTime(e.target.value)}
+                required
+              />
+            )}
           </div>
           
           <div className="space-y-2">
@@ -233,7 +299,10 @@ export const NewAppointmentModal = ({ onAppointmentCreated }: NewAppointmentModa
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button 
+              type="submit" 
+              disabled={loading || !appointmentDate || !appointmentTime || availableSlots.length === 0}
+            >
               {loading ? "Criando..." : "Criar Agendamento"}
             </Button>
           </div>
