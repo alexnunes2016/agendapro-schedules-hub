@@ -1,60 +1,51 @@
 
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Appointments from "./pages/Appointments";
-import Clients from "./pages/Clients";
-import Services from "./pages/Services";
-import MedicalRecords from "./pages/MedicalRecords";
-import Settings from "./pages/Settings";
-import SystemSettings from "./pages/SystemSettings";
-import Upgrade from "./pages/Upgrade";
-import Pricing from "./pages/Pricing";
 import BookingPublic from "./pages/BookingPublic";
-import AdminDashboard from "./pages/AdminDashboard";
-import Demo from "./pages/Demo";
-import Features from "./pages/Features";
 import NotFound from "./pages/NotFound";
+import Services from "./pages/Services";
+import Settings from "./pages/Settings";
+import Upgrade from "./pages/Upgrade";
+import Clients from "./pages/Clients";
+import AdminDashboard from "./pages/AdminDashboard";
+import MedicalRecords from "./pages/MedicalRecords";
+import SystemSettings from "./pages/SystemSettings";
+import OrganizationUsers from "./pages/OrganizationUsers";
+import "./App.css";
 
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen bg-background">
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/appointments" element={<Appointments />} />
-            <Route path="/clients" element={<Clients />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/medical-records" element={<MedicalRecords />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/system-settings" element={<SystemSettings />} />
-            <Route path="/upgrade" element={<Upgrade />} />
-            <Route path="/pricing" element={<Pricing />} />
             <Route path="/booking/:userId" element={<BookingPublic />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/upgrade" element={<Upgrade />} />
+            <Route path="/clients" element={<Clients />} />
             <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/demo" element={<Demo />} />
-            <Route path="/features" element={<Features />} />
+            <Route path="/medical-records" element={<MedicalRecords />} />
+            <Route path="/system-settings" element={<SystemSettings />} />
+            <Route path="/organization/users" element={<OrganizationUsers />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+          <Toaster />
+        </div>
+      </Router>
+    </AuthProvider>
+  );
+}
 
 export default App;
