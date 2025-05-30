@@ -3,19 +3,22 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Clock, Plus, DollarSign, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Clock, DollarSign, Edit, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { NewServiceModal } from "@/components/NewServiceModal";
+import { EditServiceModal } from "@/components/EditServiceModal";
 
 const Services = () => {
   const { user, loading: authLoading } = useAuth();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editingService, setEditingService] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Only redirect if auth is fully loaded and user is not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
       console.log('Redirecting to login from Services - user not authenticated');
@@ -24,7 +27,6 @@ const Services = () => {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    // Only fetch services when we have a user and auth is loaded
     if (!authLoading && user) {
       fetchServices();
     }
@@ -83,7 +85,11 @@ const Services = () => {
     }
   };
 
-  // Show loading while auth is loading or services are loading
+  const handleEditService = (service: any) => {
+    setEditingService(service);
+    setEditModalOpen(true);
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -92,14 +98,12 @@ const Services = () => {
     );
   }
 
-  // Don't render if no user (will redirect)
   if (!user) {
     return null;
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
@@ -116,16 +120,12 @@ const Services = () => {
               </div>
             </div>
             
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Serviço
-            </Button>
+            <NewServiceModal onServiceCreated={fetchServices} />
           </div>
         </div>
       </header>
 
       <div className="p-6">
-        {/* Services List */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {services.map((service: any) => (
             <Card key={service.id} className="hover:shadow-lg transition-shadow">
@@ -149,7 +149,12 @@ const Services = () => {
                 </div>
                 
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleEditService(service)}
+                  >
                     <Edit className="h-4 w-4 mr-2" />
                     Editar
                   </Button>
@@ -177,14 +182,18 @@ const Services = () => {
               <p className="text-gray-500 dark:text-gray-500 mb-4">
                 Cadastre seus primeiros serviços para começar a receber agendamentos
               </p>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Cadastrar Serviço
-              </Button>
+              <NewServiceModal onServiceCreated={fetchServices} />
             </CardContent>
           </Card>
         )}
       </div>
+
+      <EditServiceModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        service={editingService}
+        onServiceUpdated={fetchServices}
+      />
     </div>
   );
 };

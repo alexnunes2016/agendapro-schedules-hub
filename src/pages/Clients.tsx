@@ -4,57 +4,84 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Search, Users, Phone, Mail, Calendar } from "lucide-react";
+import { ArrowLeft, Search, Users, Phone, Mail, Calendar, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Clients = () => {
-  const [user, setUser] = useState<any>(null);
+  const { user, loading: authLoading } = useAuth();
+  const [clients, setClients] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    const userData = localStorage.getItem("agendopro_user");
-    if (!userData) {
+    if (!authLoading && !user) {
       navigate("/login");
-      return;
     }
-    setUser(JSON.parse(userData));
-  }, [navigate]);
+  }, [user, authLoading, navigate]);
 
-  // Simulação de clientes
-  const mockClients = [
-    {
-      id: 1,
-      name: "Maria Silva",
-      phone: "(11) 99999-9999",
-      email: "maria@email.com",
-      lastVisit: "2024-01-10",
-      totalAppointments: 5,
-      status: "active"
-    },
-    {
-      id: 2,
-      name: "João Santos",
-      phone: "(11) 88888-8888",
-      email: "joao@email.com",
-      lastVisit: "2024-01-08",
-      totalAppointments: 3,
-      status: "active"
-    },
-    {
-      id: 3,
-      name: "Ana Costa",
-      phone: "(11) 77777-7777",
-      email: "ana@email.com",
-      lastVisit: "2023-12-20",
-      totalAppointments: 1,
-      status: "inactive"
+  useEffect(() => {
+    if (!authLoading && user) {
+      fetchClients();
     }
-  ];
+  }, [user, authLoading]);
 
-  const filteredClients = mockClients.filter((client) =>
+  const fetchClients = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await (supabase as any)
+        .from('appointments')
+        .select('client_name, client_phone, client_email, appointment_date, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Group appointments by client and get unique clients with their latest info
+      const clientsMap = new Map();
+      
+      data?.forEach((appointment: any) => {
+        const clientKey = appointment.client_email || appointment.client_name;
+        if (!clientsMap.has(clientKey)) {
+          clientsMap.set(clientKey, {
+            name: appointment.client_name,
+            phone: appointment.client_phone,
+            email: appointment.client_email,
+            lastVisit: appointment.appointment_date,
+            totalAppointments: 1,
+            status: 'active'
+          });
+        } else {
+          const existing = clientsMap.get(clientKey);
+          existing.totalAppointments++;
+          // Update with most recent visit date
+          if (new Date(appointment.appointment_date) > new Date(existing.lastVisit)) {
+            existing.lastVisit = appointment.appointment_date;
+          }
+        }
+      });
+
+      setClients(Array.from(clientsMap.values()));
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      toast({
+        title: "Erro ao carregar clientes",
+        description: "Tente novamente em alguns instantes",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredClients = clients.filter((client: any) =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const getStatusBadge = (status: string) => {
@@ -65,9 +92,20 @@ const Clients = () => {
     );
   };
 
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-lg">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
@@ -83,12 +121,18 @@ const Clients = () => {
                 <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Clientes</h1>
               </div>
             </div>
+            
+            <Link to="/appointments">
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Cliente
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
 
       <div className="p-6">
-        {/* Search */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg">Buscar Clientes</CardTitle>
@@ -106,10 +150,9 @@ const Clients = () => {
           </CardContent>
         </Card>
 
-        {/* Clients List */}
         <div className="space-y-4">
-          {filteredClients.map((client) => (
-            <Card key={client.id} className="hover:shadow-lg transition-shadow">
+          {filteredClients.map((client: any, index: number) => (
+            <Card key={index} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between">
                   <div className="flex-1">
@@ -122,21 +165,25 @@ const Clients = () => {
                           {client.name}
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {client.totalAppointments} agendamentos
+                          {client.totalAppointments} agendamento{client.totalAppointments !== 1 ? 's' : ''}
                         </p>
                       </div>
                       {getStatusBadge(client.status)}
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                      <div className="flex items-center space-x-2">
-                        <Phone className="h-4 w-4" />
-                        <span>{client.phone}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Mail className="h-4 w-4" />
-                        <span>{client.email}</span>
-                      </div>
+                      {client.phone && (
+                        <div className="flex items-center space-x-2">
+                          <Phone className="h-4 w-4" />
+                          <span>{client.phone}</span>
+                        </div>
+                      )}
+                      {client.email && (
+                        <div className="flex items-center space-x-2">
+                          <Mail className="h-4 w-4" />
+                          <span>{client.email}</span>
+                        </div>
+                      )}
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4" />
                         <span>Última visita: {new Date(client.lastVisit).toLocaleDateString('pt-BR')}</span>
@@ -148,9 +195,11 @@ const Clients = () => {
                     <Button variant="outline" size="sm">
                       Ver Histórico
                     </Button>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                      Agendar
-                    </Button>
+                    <Link to="/appointments">
+                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                        Agendar
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               </CardContent>
@@ -165,9 +214,15 @@ const Clients = () => {
               <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">
                 Nenhum cliente encontrado
               </h3>
-              <p className="text-gray-500 dark:text-gray-500">
+              <p className="text-gray-500 dark:text-gray-500 mb-4">
                 {searchTerm ? "Tente ajustar o termo de busca" : "Você ainda não possui clientes cadastrados"}
               </p>
+              <Link to="/appointments">
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Criar Primeiro Agendamento
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         )}
