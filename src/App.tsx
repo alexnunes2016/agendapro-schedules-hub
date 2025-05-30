@@ -18,6 +18,7 @@ import SystemSettings from "./pages/SystemSettings";
 import Upgrade from "./pages/Upgrade";
 import BookingPublic from "./pages/BookingPublic";
 import AdminDashboard from "./pages/AdminDashboard";
+import Demo from "./pages/Demo";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/upgrade" element={<Upgrade />} />
             <Route path="/booking/:userId" element={<BookingPublic />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/demo" element={<Demo />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

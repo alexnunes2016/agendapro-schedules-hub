@@ -10,7 +10,18 @@ const Footer = () => {
           <span className="text-xl font-bold">AgendoPro</span>
         </div>
         <p className="text-gray-400">
-          © 2024 AgendoPro. Todos os direitos reservados.
+          © 2025 AgendoPro. Todos os direitos reservados.
+        </p>
+        <p className="text-gray-400 mt-2">
+          Uma empresa da{" "}
+          <a 
+            href="https://treadconsultoria.com.br/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:text-blue-300 underline"
+          >
+            Tread Consultoria
+          </a>
         </p>
       </div>
     </footer>
