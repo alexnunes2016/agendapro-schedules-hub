@@ -1,13 +1,12 @@
 
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, FileText, Plus } from "lucide-react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import MedicalRecordCard from "@/components/medical/MedicalRecordCard";
+import { useMedicalRecords } from "@/hooks/useMedicalRecords";
+import { useMedicalRecordsPermissions } from "@/hooks/useMedicalRecordsPermissions";
+import MedicalRecordsHeader from "@/components/medical/MedicalRecordsHeader";
+import MedicalRecordsLoading from "@/components/medical/MedicalRecordsLoading";
+import MedicalRecordsAccessDenied from "@/components/medical/MedicalRecordsAccessDenied";
+import MedicalRecordsList from "@/components/medical/MedicalRecordsList";
 import CreateMedicalRecordModal from "@/components/medical/CreateMedicalRecordModal";
 import ViewMedicalRecordModal from "@/components/medical/ViewMedicalRecordModal";
 
@@ -25,56 +24,16 @@ interface MedicalRecord {
 }
 
 const MedicalRecords = () => {
-  const [records, setRecords] = useState<MedicalRecord[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
+  
   const { user, profile, loading: authLoading } = useAuth();
-  const { toast } = useToast();
-
-  useEffect(() => {
-    if (!authLoading && user) {
-      fetchRecords();
-    } else if (!authLoading && !user) {
-      setLoading(false);
-    }
-  }, [user, authLoading]);
-
-  const fetchRecords = async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('medical_records')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching records:', error);
-        toast({
-          title: "Erro",
-          description: "Não foi possível carregar os prontuários",
-          variant: "destructive",
-        });
-      } else {
-        setRecords(data || []);
-      }
-    } catch (error) {
-      console.error('Error fetching records:', error);
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao carregar prontuários",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { records, loading, refetch } = useMedicalRecords();
+  const { canAccessMedicalRecords, canCreateRecords } = useMedicalRecordsPermissions();
 
   const handleRecordCreated = () => {
-    fetchRecords();
+    refetch();
     setShowCreateModal(false);
   };
 
@@ -83,209 +42,35 @@ const MedicalRecords = () => {
     setShowViewModal(true);
   };
 
-  const canAccessMedicalRecords = () => {
-    return profile?.service_type === 'medicina' || profile?.service_type === 'odontologia';
-  };
-
-  const canCreateRecords = () => {
-    return ['basico', 'profissional', 'premium'].includes(profile?.plan || '');
-  };
-
   // Show loading while auth is loading
   if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <FileText className="h-8 w-8 text-blue-600 mx-auto mb-4 animate-pulse" />
-          <p>Carregando prontuários...</p>
-        </div>
-      </div>
-    );
+    return <MedicalRecordsLoading />;
   }
 
   // Redirect to login if not authenticated
   if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
-          <div className="px-6 py-4">
-            <div className="flex items-center space-x-4">
-              <Link to="/">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Voltar
-                </Button>
-              </Link>
-              <div className="flex items-center space-x-2">
-                <FileText className="h-6 w-6 text-blue-600" />
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Prontuários</h1>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <div className="p-6">
-          <Card className="text-center py-12">
-            <CardContent>
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                Acesso restrito
-              </h3>
-              <p className="text-gray-500 dark:text-gray-500 mb-4">
-                Você precisa fazer login para acessar os prontuários
-              </p>
-              <Link to="/login">
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  Fazer Login
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+    return <MedicalRecordsAccessDenied type="unauthenticated" />;
   }
 
   if (!canAccessMedicalRecords()) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
-          <div className="px-6 py-4">
-            <div className="flex items-center space-x-4">
-              <Link to="/dashboard">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Voltar
-                </Button>
-              </Link>
-              <div className="flex items-center space-x-2">
-                <FileText className="h-6 w-6 text-blue-600" />
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Prontuários</h1>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <div className="p-6">
-          <Card className="text-center py-12">
-            <CardContent>
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                Módulo não disponível
-              </h3>
-              <p className="text-gray-500 dark:text-gray-500 mb-4">
-                Este módulo está disponível apenas para profissionais da área médica e odontológica
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+    return <MedicalRecordsAccessDenied type="service-restricted" />;
   }
 
   if (!canCreateRecords()) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
-          <div className="px-6 py-4">
-            <div className="flex items-center space-x-4">
-              <Link to="/dashboard">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Voltar
-                </Button>
-              </Link>
-              <div className="flex items-center space-x-2">
-                <FileText className="h-6 w-6 text-blue-600" />
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Prontuários</h1>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <div className="p-6">
-          <Card className="text-center py-12">
-            <CardContent>
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                Upgrade necessário
-              </h3>
-              <p className="text-gray-500 dark:text-gray-500 mb-4">
-                O módulo de prontuários está disponível a partir do plano Básico
-              </p>
-              <Link to="/upgrade">
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  Fazer Upgrade
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+    return <MedicalRecordsAccessDenied type="plan-restricted" />;
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link to="/dashboard">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Voltar
-                </Button>
-              </Link>
-              <div className="flex items-center space-x-2">
-                <FileText className="h-6 w-6 text-blue-600" />
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Prontuários</h1>
-              </div>
-            </div>
-            
-            <Button 
-              className="bg-blue-600 hover:bg-blue-700"
-              onClick={() => setShowCreateModal(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Prontuário
-            </Button>
-          </div>
-        </div>
-      </header>
+      <MedicalRecordsHeader onCreateNew={() => setShowCreateModal(true)} />
 
       <div className="p-6">
-        {records.length > 0 ? (
-          <div className="space-y-4">
-            {records.map((record) => (
-              <MedicalRecordCard
-                key={record.id}
-                record={record}
-                onView={handleViewRecord}
-                userPlan={profile?.plan || 'free'}
-              />
-            ))}
-          </div>
-        ) : (
-          <Card className="text-center py-12">
-            <CardContent>
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                Nenhum prontuário encontrado
-              </h3>
-              <p className="text-gray-500 dark:text-gray-500 mb-4">
-                Comece criando prontuários para seus pacientes
-              </p>
-              <Button 
-                className="bg-blue-600 hover:bg-blue-700"
-                onClick={() => setShowCreateModal(true)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Prontuário
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        <MedicalRecordsList
+          records={records}
+          onViewRecord={handleViewRecord}
+          onCreateNew={() => setShowCreateModal(true)}
+          userPlan={profile?.plan || 'free'}
+        />
       </div>
 
       <CreateMedicalRecordModal
@@ -300,7 +85,7 @@ const MedicalRecords = () => {
           onOpenChange={setShowViewModal}
           record={selectedRecord}
           userPlan={profile?.plan || 'free'}
-          onUpdate={fetchRecords}
+          onUpdate={refetch}
         />
       )}
     </div>
