@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,12 +6,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Users, DollarSign, Calendar, TrendingUp, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import UserManagementTable from "@/components/admin/UserManagementTable";
+import AddClientModal from "@/components/admin/AddClientModal";
 
 const AdminDashboard = () => {
   const { user } = useAuth();
   const { isAdmin, loading } = useAdminCheck();
+  const { isSuperAdmin, loading: superAdminLoading } = useSuperAdminCheck();
   const navigate = useNavigate();
   const [adminStats, setAdminStats] = useState({
     totalUsers: 0,
@@ -76,7 +78,7 @@ const AdminDashboard = () => {
     }
   };
 
-  if (loading) {
+  if (loading || superAdminLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div>Carregando...</div>
@@ -107,17 +109,24 @@ const AdminDashboard = () => {
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
         <div className="px-6 py-4">
-          <div className="flex items-center space-x-4">
-            <Link to="/dashboard">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar
-              </Button>
-            </Link>
-            <div className="flex items-center space-x-2">
-              <Users className="h-6 w-6 text-red-600" />
-              <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Admin Dashboard</h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Link to="/dashboard">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Voltar
+                </Button>
+              </Link>
+              <div className="flex items-center space-x-2">
+                <Users className="h-6 w-6 text-red-600" />
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Admin Dashboard</h1>
+              </div>
             </div>
+            
+            {/* Botão de adicionar cliente apenas para super admin */}
+            {isSuperAdmin && (
+              <AddClientModal />
+            )}
           </div>
         </div>
       </header>
