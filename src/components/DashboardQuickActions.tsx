@@ -1,13 +1,18 @@
 
 import { Link } from "react-router-dom";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Users, Clock, Settings } from "lucide-react";
+import { Calendar, Users, Clock, FileText } from "lucide-react";
 
 interface DashboardQuickActionsProps {
   profile: any;
 }
 
 const DashboardQuickActions = ({ profile }: DashboardQuickActionsProps) => {
+  const canAccessMedicalRecords = () => {
+    return (profile?.service_type === 'medicina' || profile?.service_type === 'odontologia') &&
+           ['basico', 'profissional', 'premium'].includes(profile?.plan || '');
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <Link to="/appointments">
@@ -40,11 +45,11 @@ const DashboardQuickActions = ({ profile }: DashboardQuickActionsProps) => {
         </Card>
       </Link>
 
-      {(profile.service_type === 'medicina' || profile.service_type === 'odontologia') && (
+      {canAccessMedicalRecords() && (
         <Link to="/medical-records">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardHeader className="text-center">
-              <Settings className="h-12 w-12 text-red-600 mx-auto mb-2" />
+              <FileText className="h-12 w-12 text-red-600 mx-auto mb-2" />
               <CardTitle className="text-lg">Prontuários</CardTitle>
               <CardDescription>Prontuários médicos digitais</CardDescription>
             </CardHeader>

@@ -62,6 +62,89 @@ export type Database = {
           },
         ]
       }
+      medical_record_files: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          medical_record_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id?: string
+          medical_record_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          file_url?: string
+          id?: string
+          medical_record_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_record_files_medical_record_id_fkey"
+            columns: ["medical_record_id"]
+            isOneToOne: false
+            referencedRelation: "medical_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medical_records: {
+        Row: {
+          created_at: string
+          date_of_birth: string | null
+          diagnosis: string | null
+          id: string
+          notes: string | null
+          patient_email: string | null
+          patient_name: string
+          patient_phone: string | null
+          treatment: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date_of_birth?: string | null
+          diagnosis?: string | null
+          id?: string
+          notes?: string | null
+          patient_email?: string | null
+          patient_name: string
+          patient_phone?: string | null
+          treatment?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date_of_birth?: string | null
+          diagnosis?: string | null
+          id?: string
+          notes?: string | null
+          patient_email?: string | null
+          patient_name?: string
+          patient_phone?: string | null
+          treatment?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       organization_calendars: {
         Row: {
           created_at: string | null
