@@ -14,6 +14,7 @@ import Clients from "./pages/Clients";
 import Services from "./pages/Services";
 import MedicalRecords from "./pages/MedicalRecords";
 import Settings from "./pages/Settings";
+import SystemSettings from "./pages/SystemSettings";
 import Upgrade from "./pages/Upgrade";
 import BookingPublic from "./pages/BookingPublic";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/services" element={<Services />} />
             <Route path="/medical-records" element={<MedicalRecords />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/system-settings" element={<SystemSettings />} />
             <Route path="/upgrade" element={<Upgrade />} />
             <Route path="/booking/:userId" element={<BookingPublic />} />
             <Route path="/admin" element={<AdminDashboard />} />
