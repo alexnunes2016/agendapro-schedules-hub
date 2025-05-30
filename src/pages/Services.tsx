@@ -3,45 +3,84 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Clock, Plus, DollarSign } from "lucide-react";
+import { ArrowLeft, Clock, Plus, DollarSign, Edit, Trash2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Services = () => {
-  const [user, setUser] = useState<any>(null);
+  const { user } = useAuth();
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    const userData = localStorage.getItem("agendopro_user");
-    if (!userData) {
+    if (!user) {
       navigate("/login");
       return;
     }
-    setUser(JSON.parse(userData));
-  }, [navigate]);
+    fetchServices();
+  }, [user, navigate]);
 
-  // Simulação de serviços
-  const mockServices = [
-    {
-      id: 1,
-      name: "Limpeza dental",
-      duration: 60,
-      price: "R$ 120,00",
-      description: "Limpeza completa dos dentes"
-    },
-    {
-      id: 2,
-      name: "Consulta",
-      duration: 30,
-      price: "R$ 80,00",
-      description: "Consulta de rotina"
-    },
-    {
-      id: 3,
-      name: "Obturação",
-      duration: 90,
-      price: "R$ 200,00",
-      description: "Restauração dentária"
+  const fetchServices = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setServices(data || []);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      toast({
+        title: "Erro ao carregar serviços",
+        description: "Tente novamente em alguns instantes",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const handleDeleteService = async (serviceId: string) => {
+    if (!confirm('Tem certeza que deseja excluir este serviço?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('services')
+        .update({ is_active: false })
+        .eq('id', serviceId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Serviço excluído",
+        description: "O serviço foi removido com sucesso",
+      });
+      
+      fetchServices();
+    } catch (error) {
+      console.error('Error deleting service:', error);
+      toast({
+        title: "Erro ao excluir serviço",
+        description: "Tente novamente em alguns instantes",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div>Carregando...</div>
+    </div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -73,7 +112,7 @@ const Services = () => {
       <div className="p-6">
         {/* Services List */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockServices.map((service) => (
+          {services.map((service: any) => (
             <Card key={service.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="text-lg">{service.name}</CardTitle>
@@ -86,20 +125,26 @@ const Services = () => {
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center space-x-2 text-sm">
                     <Clock className="h-4 w-4 text-gray-500" />
-                    <span>{service.duration} minutos</span>
+                    <span>{service.duration_minutes} minutos</span>
                   </div>
                   <div className="flex items-center space-x-2 text-sm">
                     <DollarSign className="h-4 w-4 text-gray-500" />
-                    <span>{service.price}</span>
+                    <span>R$ {service.price ? parseFloat(service.price).toFixed(2) : '0,00'}</span>
                   </div>
                 </div>
                 
                 <div className="flex space-x-2">
                   <Button variant="outline" size="sm" className="flex-1">
+                    <Edit className="h-4 w-4 mr-2" />
                     Editar
                   </Button>
-                  <Button variant="outline" size="sm" className="text-red-600 border-red-600">
-                    Excluir
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-red-600 border-red-600 hover:bg-red-50"
+                    onClick={() => handleDeleteService(service.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
@@ -107,7 +152,7 @@ const Services = () => {
           ))}
         </div>
 
-        {mockServices.length === 0 && (
+        {services.length === 0 && (
           <Card className="text-center py-12">
             <CardContent>
               <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />

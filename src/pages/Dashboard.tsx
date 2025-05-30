@@ -5,24 +5,76 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Users, Clock, Settings, LogOut, Plus, Copy, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
-  const [user, setUser] = useState<any>(null);
+  const { user, profile, signOut } = useAuth();
+  const [appointments, setAppointments] = useState([]);
+  const [todayCount, setTodayCount] = useState(0);
+  const [weekCount, setWeekCount] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    const userData = localStorage.getItem("agendopro_user");
-    if (!userData) {
+    if (!user) {
       navigate("/login");
       return;
     }
-    setUser(JSON.parse(userData));
-  }, [navigate]);
+    
+    fetchAppointments();
+  }, [user, navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("agendopro_user");
+  const fetchAppointments = async () => {
+    if (!user) return;
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+
+      // Get recent appointments
+      const { data: recentAppointments, error: recentError } = await supabase
+        .from('appointments')
+        .select('*, services(name)')
+        .eq('user_id', user.id)
+        .gte('appointment_date', today)
+        .order('appointment_date', { ascending: true })
+        .order('appointment_time', { ascending: true })
+        .limit(3);
+
+      if (!recentError && recentAppointments) {
+        setAppointments(recentAppointments);
+      }
+
+      // Count today's appointments
+      const { count: todayCountResult } = await supabase
+        .from('appointments')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('appointment_date', today);
+
+      setTodayCount(todayCountResult || 0);
+
+      // Count week's appointments
+      const { count: weekCountResult } = await supabase
+        .from('appointments')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('appointment_date', weekStart.toISOString().split('T')[0])
+        .lte('appointment_date', weekEnd.toISOString().split('T')[0]);
+
+      setWeekCount(weekCountResult || 0);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut();
     navigate("/");
     toast({
       title: "Logout realizado",
@@ -44,13 +96,26 @@ const Dashboard = () => {
     document.documentElement.classList.toggle('dark');
   };
 
-  if (!user) {
+  const getStatusBadge = (status: string) => {
+    const statusMap = {
+      'confirmed': { label: 'Confirmado', class: 'bg-green-100 text-green-800' },
+      'pending': { label: 'Pendente', class: 'bg-yellow-100 text-yellow-800' },
+      'cancelled': { label: 'Cancelado', class: 'bg-red-100 text-red-800' },
+      'completed': { label: 'Concluído', class: 'bg-blue-100 text-blue-800' }
+    };
+    const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.pending;
+    return (
+      <span className={`px-2 py-1 text-xs rounded-full ${statusInfo.class}`}>
+        {statusInfo.label}
+      </span>
+    );
+  };
+
+  if (!user || !profile) {
     return <div>Carregando...</div>;
   }
 
   const today = new Date().toLocaleDateString('pt-BR');
-  const todayAppointments = 3; // Simulação
-  const weekAppointments = 12; // Simulação
 
   return (
     <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 ${darkMode ? 'dark' : ''}`}>
@@ -62,7 +127,7 @@ const Dashboard = () => {
               <Calendar className="h-8 w-8 text-blue-600" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-800 dark:text-white">AgendoPro</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{user.clinic}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{profile.clinic_name}</p>
               </div>
             </div>
             
@@ -76,7 +141,7 @@ const Dashboard = () => {
                 {darkMode ? '☀️' : '🌙'}
               </Button>
               
-              {user.plan === 'free' && (
+              {profile.plan === 'free' && (
                 <Link to="/upgrade">
                   <Button variant="outline" className="border-yellow-500 text-yellow-600 hover:bg-yellow-50">
                     <Star className="h-4 w-4 mr-2" />
@@ -108,7 +173,7 @@ const Dashboard = () => {
         {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
-            Olá, {user.name}! 👋
+            Olá, {profile.name}! 👋
           </h2>
           <p className="text-gray-600 dark:text-gray-400">
             Aqui está um resumo dos seus agendamentos para hoje ({today})
@@ -124,9 +189,9 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-800 dark:text-white">{todayAppointments}</div>
+              <div className="text-2xl font-bold text-gray-800 dark:text-white">{todayCount}</div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                +2 comparado a ontem
+                Total para hoje
               </p>
             </CardContent>
           </Card>
@@ -138,9 +203,9 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-800 dark:text-white">{weekAppointments}</div>
+              <div className="text-2xl font-bold text-gray-800 dark:text-white">{weekCount}</div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                +8% comparado à semana passada
+                Total da semana
               </p>
             </CardContent>
           </Card>
@@ -152,9 +217,9 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-800 dark:text-white capitalize">{user.plan}</div>
+              <div className="text-2xl font-bold text-gray-800 dark:text-white capitalize">{profile.plan}</div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {user.plan === 'free' ? '7 dias restantes' : 'Ativo'}
+                {profile.plan === 'free' ? 'Plano gratuito' : 'Plano ativo'}
               </p>
             </CardContent>
           </Card>
@@ -192,7 +257,7 @@ const Dashboard = () => {
             </Card>
           </Link>
 
-          {(user.serviceType === 'medicina' || user.serviceType === 'odontologia') && (
+          {(profile.service_type === 'medicina' || profile.service_type === 'odontologia') && (
             <Link to="/medical-records">
               <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                 <CardHeader className="text-center">
@@ -219,36 +284,24 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {/* Simulação de agendamentos */}
-              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-800 dark:text-white">Maria Silva</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Limpeza dental - 14:00</p>
+              {appointments.length > 0 ? (
+                appointments.map((appointment: any) => (
+                  <div key={appointment.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-800 dark:text-white">{appointment.client_name}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {appointment.services?.name} - {new Date(`2000-01-01T${appointment.appointment_time}`).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    {getStatusBadge(appointment.status)}
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">Nenhum agendamento próximo</p>
                 </div>
-                <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                  Confirmado
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-800 dark:text-white">João Santos</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Consulta - 15:30</p>
-                </div>
-                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-                  Pendente
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-800 dark:text-white">Ana Costa</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Corte de cabelo - 16:00</p>
-                </div>
-                <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                  Confirmado
-                </span>
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>
