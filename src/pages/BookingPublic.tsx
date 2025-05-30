@@ -1,8 +1,9 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import BookingProgress from "@/components/booking/BookingProgress";
 import ServiceSelection from "@/components/booking/ServiceSelection";
 import DateTimeSelection from "@/components/booking/DateTimeSelection";
@@ -13,6 +14,8 @@ const BookingPublic = () => {
   const { userId } = useParams();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [professionalData, setProfessionalData] = useState<any>(null);
   const [formData, setFormData] = useState({
     service: "",
     date: "",
@@ -23,40 +26,129 @@ const BookingPublic = () => {
     notes: ""
   });
 
-  // Mock data - Em produção, isso viria da API baseado no userId
-  const professionalData = {
-    id: userId,
-    name: "Dr. João Silva",
-    clinic: "Clínica Exemplo",
-    serviceType: "odontologia",
-    logo: "",
-    services: [
-      { id: 1, name: "Limpeza dental", duration: 60, price: "R$ 120,00" },
-      { id: 2, name: "Consulta", duration: 30, price: "R$ 80,00" },
-      { id: 3, name: "Obturação", duration: 90, price: "R$ 200,00" },
-    ],
-    availableSlots: [
-      "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-      "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"
-    ]
+  // Carregar dados do profissional e serviços
+  useEffect(() => {
+    if (userId) {
+      fetchProfessionalData();
+    }
+  }, [userId]);
+
+  const fetchProfessionalData = async () => {
+    try {
+      setLoading(true);
+      
+      // Buscar dados do perfil do usuário
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        console.error('Erro ao buscar perfil:', profileError);
+        toast({
+          title: "Erro",
+          description: "Profissional não encontrado",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Buscar serviços do usuário
+      const { data: services, error: servicesError } = await supabase
+        .from('services')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('name');
+
+      if (servicesError) {
+        console.error('Erro ao buscar serviços:', servicesError);
+      }
+
+      // Configurar dados do profissional
+      setProfessionalData({
+        id: userId,
+        name: profile.name || "Profissional",
+        clinic: profile.clinic_name || "Clínica",
+        serviceType: profile.service_type || "outros",
+        logo: "",
+        services: services?.map(service => ({
+          id: service.id,
+          name: service.name,
+          duration: service.duration_minutes,
+          price: `R$ ${service.price?.toFixed(2)?.replace('.', ',') || '0,00'}`
+        })) || [],
+        availableSlots: [
+          "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+          "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"
+        ]
+      });
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar dados do profissional",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simulação de criação do agendamento
-    console.log('Dados do agendamento:', formData);
-    
-    toast({
-      title: "Agendamento realizado com sucesso!",
-      description: "Você receberá um e-mail de confirmação em breve.",
-    });
-    
-    setStep(4); // Página de confirmação
+    try {
+      const selectedService = professionalData?.services.find((s: any) => s.id === formData.service);
+      
+      // Criar agendamento no banco de dados
+      const { data: appointment, error } = await supabase
+        .from('appointments')
+        .insert({
+          user_id: userId,
+          service_id: formData.service,
+          client_name: formData.clientName,
+          client_phone: formData.clientPhone,
+          client_email: formData.clientEmail,
+          appointment_date: formData.date,
+          appointment_time: formData.time,
+          notes: formData.notes,
+          status: 'confirmed'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao criar agendamento:', error);
+        toast({
+          title: "Erro ao criar agendamento",
+          description: "Tente novamente em alguns instantes",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Agendamento criado:', appointment);
+      
+      toast({
+        title: "Agendamento realizado com sucesso!",
+        description: "Você receberá uma confirmação em breve.",
+      });
+      
+      setStep(4); // Página de confirmação
+    } catch (error) {
+      console.error('Erro no agendamento:', error);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao criar agendamento",
+        variant: "destructive",
+      });
+    }
   };
 
   const resetForm = () => {
@@ -72,7 +164,40 @@ const BookingPublic = () => {
     });
   };
 
-  const selectedService = professionalData.services.find(s => s.id.toString() === formData.service);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!professionalData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Profissional não encontrado</h1>
+          <p className="text-gray-600">Verifique se o link está correto.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (professionalData.services.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Nenhum serviço disponível</h1>
+          <p className="text-gray-600">Este profissional ainda não cadastrou serviços.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const selectedService = professionalData.services.find((s: any) => s.id === formData.service);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">

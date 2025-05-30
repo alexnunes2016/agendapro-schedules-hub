@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Settings as SettingsIcon, Save, Shield, User, MessageSquare } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { ArrowLeft, Settings as SettingsIcon, Save, Shield, User, MessageSquare, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,6 +22,10 @@ const Settings = () => {
     email: "",
     clinicName: "",
     serviceType: ""
+  });
+  const [notificationSettings, setNotificationSettings] = useState({
+    emailEnabled: false,
+    whatsappEnabled: false
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -51,7 +56,7 @@ const Settings = () => {
 
     setLoading(true);
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('profiles')
         .update({
           name: formData.name,
@@ -79,6 +84,81 @@ const Settings = () => {
     }
   };
 
+  const handleNotificationToggle = async (type: 'email' | 'whatsapp', enabled: boolean) => {
+    if (!user) return;
+
+    // Verificar se o plano permite a funcionalidade
+    const userPlan = profile?.plan || 'free';
+    
+    if (userPlan === 'free') {
+      toast({
+        title: "Upgrade necessário",
+        description: `${type === 'email' ? 'Notificações por email' : 'Notificações por WhatsApp'} estão disponíveis nos planos Pro e Premium`,
+        variant: "destructive",
+      });
+      
+      // Redirecionar para página de upgrade
+      navigate("/upgrade");
+      return;
+    }
+
+    if (type === 'whatsapp' && userPlan === 'pro') {
+      toast({
+        title: "Upgrade para Premium",
+        description: "Notificações por WhatsApp estão disponíveis apenas no plano Premium",
+        variant: "destructive",
+      });
+      
+      navigate("/upgrade");
+      return;
+    }
+
+    try {
+      const settingKey = type === 'email' ? 'email_notifications_enabled' : 'whatsapp_notifications_enabled';
+      
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: user.id,
+          setting_key: settingKey,
+          setting_value: enabled
+        }, { onConflict: 'user_id,setting_key' });
+
+      if (error) throw error;
+
+      setNotificationSettings(prev => ({
+        ...prev,
+        [type === 'email' ? 'emailEnabled' : 'whatsappEnabled']: enabled
+      }));
+
+      toast({
+        title: "Configuração atualizada",
+        description: `Notificações por ${type === 'email' ? 'email' : 'WhatsApp'} ${enabled ? 'ativadas' : 'desativadas'}`,
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar notificações:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar as configurações de notificação",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getBookingUrl = () => {
+    if (!user) return '';
+    return `${window.location.origin}/booking/${user.id}`;
+  };
+
+  const copyBookingUrl = () => {
+    const url = getBookingUrl();
+    navigator.clipboard.writeText(url);
+    toast({
+      title: "Link copiado!",
+      description: "O link de agendamento foi copiado para a área de transferência",
+    });
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -89,6 +169,8 @@ const Settings = () => {
       </div>
     );
   }
+
+  const userPlan = profile?.plan || 'free';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -123,8 +205,9 @@ const Settings = () => {
 
       <div className="p-6 max-w-4xl mx-auto">
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="profile">Perfil</TabsTrigger>
+            <TabsTrigger value="booking">Agendamento</TabsTrigger>
             <TabsTrigger value="notifications">Notificações</TabsTrigger>
             <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
           </TabsList>
@@ -205,10 +288,10 @@ const Settings = () => {
                     <div>
                       <h4 className="font-medium">Plano Atual</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">
-                        {profile?.plan || 'Free'}
+                        {userPlan}
                       </p>
                     </div>
-                    {profile?.plan === 'free' && (
+                    {userPlan === 'free' && (
                       <Link to="/upgrade">
                         <Button className="bg-yellow-600 hover:bg-yellow-700">
                           Fazer Upgrade
@@ -233,44 +316,112 @@ const Settings = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="notifications" className="space-y-6">
-            {/* Notification Settings */}
+          <TabsContent value="booking" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Notificações</CardTitle>
+                <CardTitle>Link de Agendamento Público</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">Lembretes por Email</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Enviar lembretes de agendamento por email
-                      </p>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      {profile?.plan === 'free' ? 'Disponível no Pro' : 'Ativar'}
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Seu link de agendamento</Label>
+                  <div className="flex space-x-2">
+                    <Input
+                      value={getBookingUrl()}
+                      readOnly
+                      className="bg-gray-100 dark:bg-gray-800"
+                    />
+                    <Button onClick={copyBookingUrl} variant="outline">
+                      Copiar
                     </Button>
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">Lembretes por WhatsApp</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Enviar lembretes de agendamento por WhatsApp
-                      </p>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      {profile?.plan === 'free' ? 'Disponível no Premium' : 'Ativar'}
-                    </Button>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Compartilhe este link com seus clientes para que eles possam agendar diretamente
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="notifications" className="space-y-6">
+            {/* Email Notifications */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Mail className="h-5 w-5 mr-2" />
+                  Notificações por Email
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Lembretes por Email</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Enviar lembretes de agendamento por email
+                    </p>
                   </div>
+                  {userPlan === 'free' ? (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate("/upgrade")}
+                    >
+                      Disponível no Pro
+                    </Button>
+                  ) : (
+                    <Switch
+                      checked={notificationSettings.emailEnabled}
+                      onCheckedChange={(checked) => handleNotificationToggle('email', checked)}
+                    />
+                  )}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Lembretes por WhatsApp</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Enviar lembretes de agendamento por WhatsApp
+                    </p>
+                  </div>
+                  {userPlan === 'free' || userPlan === 'pro' ? (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate("/upgrade")}
+                    >
+                      {userPlan === 'free' ? 'Disponível no Premium' : 'Upgrade para Premium'}
+                    </Button>
+                  ) : (
+                    <Switch
+                      checked={notificationSettings.whatsappEnabled}
+                      onCheckedChange={(checked) => handleNotificationToggle('whatsapp', checked)}
+                    />
+                  )}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="whatsapp" className="space-y-6">
-            <WhatsAppSettings userId={user?.id} />
+            {userPlan === 'premium' ? (
+              <WhatsAppSettings userId={user?.id} />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <MessageSquare className="h-5 w-5 mr-2" />
+                    Configurações WhatsApp
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-center py-8">
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    As configurações de WhatsApp estão disponíveis apenas no plano Premium
+                  </p>
+                  <Button onClick={() => navigate("/upgrade")} className="bg-green-600 hover:bg-green-700">
+                    Fazer Upgrade para Premium
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
