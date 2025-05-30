@@ -25,7 +25,7 @@ interface AdminMedicalRecord {
     name: string;
     email: string;
     clinic_name: string | null;
-  };
+  } | null;
 }
 
 const AdminMedicalRecordsTable = () => {
@@ -114,7 +114,7 @@ const AdminMedicalRecordsTable = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
                         <div className="flex items-center space-x-2">
                           <User className="h-4 w-4" />
-                          <span>Profissional: {record.profiles?.name}</span>
+                          <span>Profissional: {record.profiles?.name || 'Não informado'}</span>
                         </div>
                         {record.profiles?.clinic_name && (
                           <div className="flex items-center space-x-2">

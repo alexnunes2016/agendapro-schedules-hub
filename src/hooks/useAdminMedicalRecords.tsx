@@ -20,7 +20,7 @@ interface AdminMedicalRecord {
     name: string;
     email: string;
     clinic_name: string | null;
-  };
+  } | null;
 }
 
 export const useAdminMedicalRecords = () => {
@@ -38,29 +38,55 @@ export const useAdminMedicalRecords = () => {
     
     try {
       console.log('Fetching all medical records for super admin');
-      const { data, error } = await supabase
+      
+      // Buscar primeiro os prontuários médicos
+      const { data: medicalRecordsData, error: medicalRecordsError } = await supabase
         .from('medical_records')
-        .select(`
-          *,
-          profiles:user_id (
-            name,
-            email,
-            clinic_name
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching admin records:', error);
+      if (medicalRecordsError) {
+        console.error('Error fetching medical records:', medicalRecordsError);
         toast({
           title: "Erro",
           description: "Não foi possível carregar os prontuários",
           variant: "destructive",
         });
-      } else {
-        console.log('Fetched admin records:', data);
-        setRecords(data || []);
+        return;
       }
+
+      // Buscar os perfis dos usuários
+      const userIds = medicalRecordsData?.map(record => record.user_id) || [];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name, email, clinic_name')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os dados dos profissionais",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Combinar os dados
+      const recordsWithProfiles = medicalRecordsData?.map(record => {
+        const profile = profilesData?.find(p => p.id === record.user_id);
+        return {
+          ...record,
+          profiles: profile ? {
+            name: profile.name || 'Nome não informado',
+            email: profile.email || 'Email não informado',
+            clinic_name: profile.clinic_name
+          } : null
+        };
+      }) || [];
+
+      console.log('Fetched admin records:', recordsWithProfiles);
+      setRecords(recordsWithProfiles);
     } catch (error) {
       console.error('Error fetching admin medical records:', error);
       toast({

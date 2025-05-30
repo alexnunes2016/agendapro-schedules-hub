@@ -21,7 +21,7 @@ interface AdminMedicalRecord {
     name: string;
     email: string;
     clinic_name: string | null;
-  };
+  } | null;
 }
 
 interface AdminMedicalRecordModalProps {
@@ -50,10 +50,10 @@ const AdminMedicalRecordModal = ({ open, onOpenChange, record }: AdminMedicalRec
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
               <div>
-                <span className="font-medium">Nome:</span> {record.profiles?.name}
+                <span className="font-medium">Nome:</span> {record.profiles?.name || 'Não informado'}
               </div>
               <div>
-                <span className="font-medium">Email:</span> {record.profiles?.email}
+                <span className="font-medium">Email:</span> {record.profiles?.email || 'Não informado'}
               </div>
               {record.profiles?.clinic_name && (
                 <div className="flex items-center space-x-2">
