@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CreateMedicalRecordModalProps {
   open: boolean;
@@ -32,23 +33,35 @@ const CreateMedicalRecordModal = ({ open, onOpenChange, onSuccess }: CreateMedic
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Usuário não autenticado",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const { error } = await supabase
         .from('medical_records')
-        .insert([{
+        .insert({
           ...formData,
+          user_id: user.id,
           date_of_birth: formData.date_of_birth || null,
           patient_email: formData.patient_email || null,
           patient_phone: formData.patient_phone || null,
           diagnosis: formData.diagnosis || null,
           treatment: formData.treatment || null,
           notes: formData.notes || null,
-        }]);
+        });
 
       if (error) {
         toast({
