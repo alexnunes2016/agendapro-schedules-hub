@@ -72,20 +72,34 @@ export const useOrganizationUsers = () => {
     }
 
     try {
-      // Em produção, aqui seria criado o usuário no Supabase Auth
-      // Por agora, apenas simulamos
+      // Criar convite na tabela user_invitations
+      const { data, error } = await supabase
+        .from('user_invitations')
+        .insert({
+          email: userData.email,
+          name: userData.name,
+          role: userData.role || 'member',
+          organization_id: profile.organization_id,
+          invited_by: profile.id,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
       toast({
-        title: "Usuário Criado",
-        description: `Usuário ${userData.name} foi criado com sucesso. Um email de convite foi enviado.`,
+        title: "Convite Enviado",
+        description: `Convite enviado para ${userData.name}. Um email de convite foi enviado para ${userData.email}.`,
       });
       
       await fetchUsers();
       return true;
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.error('Error creating user invitation:', error);
       toast({
         title: "Erro",
-        description: "Erro ao criar usuário",
+        description: "Erro ao enviar convite para usuário",
         variant: "destructive",
       });
       return false;

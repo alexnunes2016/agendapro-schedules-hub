@@ -42,8 +42,8 @@ const Settings = () => {
         </div>
       </header>
 
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="grid gap-6 md:grid-cols-2">
+      <div className="p-6">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           
           {/* Usuários da Organização */}
           <Card className="hover:shadow-lg transition-shadow">
@@ -99,9 +99,11 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" variant="outline">
-                Em breve
-              </Button>
+              <Link to="/settings/calendars">
+                <Button className="w-full">
+                  Configurar Agendas
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
@@ -117,9 +119,11 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" variant="outline">
-                Em breve
-              </Button>
+              <Link to="/settings/notifications">
+                <Button className="w-full">
+                  Configurar Notificações
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 

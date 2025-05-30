@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -17,6 +16,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import MedicalRecords from "./pages/MedicalRecords";
 import SystemSettings from "./pages/SystemSettings";
 import OrganizationUsers from "./pages/OrganizationUsers";
+import CalendarSettings from "./pages/CalendarSettings";
+import NotificationSettings from "./pages/NotificationSettings";
 import "./App.css";
 
 function App() {
@@ -39,6 +40,8 @@ function App() {
             <Route path="/medical-records" element={<MedicalRecords />} />
             <Route path="/system-settings" element={<SystemSettings />} />
             <Route path="/organization/users" element={<OrganizationUsers />} />
+            <Route path="/settings/calendars" element={<CalendarSettings />} />
+            <Route path="/settings/notifications" element={<NotificationSettings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster />
