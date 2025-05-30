@@ -9,6 +9,7 @@ import { useAdminStats } from "@/hooks/useAdminStats";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminStatsCards from "@/components/admin/AdminStatsCards";
 import AdminTabs from "@/components/admin/AdminTabs";
+import Footer from "@/components/Footer";
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -56,13 +57,15 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <AdminHeader />
       
-      <div className="p-6">
+      <div className="flex-1 p-6">
         <AdminStatsCards adminStats={adminStats} />
         <AdminTabs />
       </div>
+      
+      <Footer />
     </div>
   );
 };

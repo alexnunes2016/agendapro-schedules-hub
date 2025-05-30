@@ -4,6 +4,7 @@ import UpgradeHeader from "@/components/UpgradeHeader";
 import UpgradeHero from "@/components/UpgradeHero";
 import PricingCard from "@/components/PricingCard";
 import UpgradeFAQ from "@/components/UpgradeFAQ";
+import Footer from "@/components/Footer";
 
 const Upgrade = () => {
   const { user, profile } = useAuth();
@@ -105,10 +106,10 @@ const Upgrade = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <UpgradeHeader />
 
-      <div className="p-6">
+      <div className="flex-1 p-6">
         <UpgradeHero />
 
         {/* Plans */}
@@ -124,6 +125,8 @@ const Upgrade = () => {
 
         <UpgradeFAQ />
       </div>
+
+      <Footer />
     </div>
   );
 };

@@ -4,16 +4,21 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Calendar, ArrowLeft, Search, Clock, User, Phone, Mail, Edit, Check, X } from "lucide-react";
+import { Calendar, ArrowLeft, Search, Clock, User, Phone, Mail, Edit, Check, X, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { NewAppointmentModal } from "@/components/NewAppointmentModal";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
+import Footer from "@/components/Footer";
 
 const Appointments = () => {
   const { user, loading: authLoading } = useAuth();
+  const { isAdmin } = useAdminCheck();
+  const { isSuperAdmin } = useSuperAdminCheck();
   const [appointments, setAppointments] = useState([]);
   const [services, setServices] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -110,6 +115,36 @@ const Appointments = () => {
     }
   };
 
+  const deleteAppointment = async (appointmentId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este agendamento? Esta ação não pode ser desfeita.")) {
+      return;
+    }
+
+    try {
+      const { error } = await (supabase as any)
+        .from('appointments')
+        .delete()
+        .eq('id', appointmentId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Agendamento excluído",
+        description: "O agendamento foi excluído com sucesso",
+      });
+
+      fetchAppointments();
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+      toast({
+        title: "Erro ao excluir agendamento",
+        description: "Tente novamente em alguns instantes",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "confirmed":
@@ -143,7 +178,7 @@ const Appointments = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
@@ -165,7 +200,7 @@ const Appointments = () => {
         </div>
       </header>
 
-      <div className="p-6">
+      <div className="flex-1 p-6">
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg">Filtros</CardTitle>
@@ -287,6 +322,17 @@ const Appointments = () => {
                           Cancelar
                         </Button>
                       )}
+                      {(isAdmin || isSuperAdmin) && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-red-600 border-red-600"
+                          onClick={() => deleteAppointment(appointment.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Excluir
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -311,6 +357,8 @@ const Appointments = () => {
           </Card>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 };
