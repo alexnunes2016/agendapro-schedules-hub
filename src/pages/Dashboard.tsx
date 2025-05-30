@@ -1,15 +1,16 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Users, Clock, Settings, LogOut, Plus, Copy, Star } from "lucide-react";
+import { Calendar, Users, Clock, Settings, LogOut, Plus, Copy, Star, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
+  const { isAdmin } = useAdminCheck();
   const [appointments, setAppointments] = useState([]);
   const [todayCount, setTodayCount] = useState(0);
   const [weekCount, setWeekCount] = useState(0);
@@ -146,6 +147,15 @@ const Dashboard = () => {
                   <Button variant="outline" className="border-yellow-500 text-yellow-600 hover:bg-yellow-50">
                     <Star className="h-4 w-4 mr-2" />
                     Upgrade
+                  </Button>
+                </Link>
+              )}
+
+              {isAdmin && (
+                <Link to="/admin">
+                  <Button variant="outline" className="border-red-500 text-red-600 hover:bg-red-50">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Admin
                   </Button>
                 </Link>
               )}

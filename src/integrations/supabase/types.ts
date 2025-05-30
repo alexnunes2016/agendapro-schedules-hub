@@ -412,6 +412,18 @@ export type Database = {
         Args: { p_email: string; p_name: string; p_phone?: string }
         Returns: string
       }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      promote_to_admin: {
+        Args: { user_email: string }
+        Returns: undefined
+      }
+      setup_super_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       appointment_status: "pending" | "confirmed" | "cancelled" | "completed"
@@ -431,7 +443,7 @@ export type Database = {
         | "advocacia"
         | "estetica"
         | "outros"
-      user_role: "user" | "super_admin"
+      user_role: "user" | "super_admin" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -566,7 +578,7 @@ export const Constants = {
         "estetica",
         "outros",
       ],
-      user_role: ["user", "super_admin"],
+      user_role: ["user", "super_admin", "admin"],
     },
   },
 } as const

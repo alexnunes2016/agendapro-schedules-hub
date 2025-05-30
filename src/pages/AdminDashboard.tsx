@@ -4,27 +4,25 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Users, DollarSign, Calendar, TrendingUp } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 const AdminDashboard = () => {
-  const [user, setUser] = useState<any>(null);
+  const { user } = useAuth();
+  const { isAdmin, loading } = useAdminCheck();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const userData = localStorage.getItem("agendopro_user");
-    if (!userData) {
+    if (!user) {
       navigate("/login");
       return;
     }
-    const user = JSON.parse(userData);
-    
-    // Verificar se é admin (simulação)
-    if (user.email !== "admin@agendopro.com") {
+
+    if (!loading && !isAdmin) {
       navigate("/dashboard");
       return;
     }
-    
-    setUser(user);
-  }, [navigate]);
+  }, [user, isAdmin, loading, navigate]);
 
   // Dados simulados do admin
   const adminStats = {
@@ -61,8 +59,30 @@ const AdminDashboard = () => {
     }
   ];
 
-  if (!user) {
-    return <div>Carregando...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div>Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+            Acesso Negado
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Você não tem permissão para acessar esta área.
+          </p>
+          <Link to="/dashboard">
+            <Button>Voltar ao Dashboard</Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
