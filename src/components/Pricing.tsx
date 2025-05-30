@@ -9,8 +9,8 @@ const Pricing = () => {
     {
       name: "Gratuito",
       price: "R$ 0",
-      period: "/mês",
-      description: "Perfeito para começar",
+      period: "por 7 dias",
+      description: "Ideal para testar o sistema",
       features: [
         "Até 50 agendamentos/mês",
         "1 usuário",
@@ -21,8 +21,24 @@ const Pricing = () => {
       popular: false
     },
     {
-      name: "Pro",
-      price: "R$ 29",
+      name: "Básico",
+      price: "R$ 49,90",
+      period: "/mês",
+      description: "Para pequenos estabelecimentos",
+      features: [
+        "2 agendas",
+        "Até 200 agendamentos/mês",
+        "Lembretes por email",
+        "Prontuários básicos no perfil médico e odontológico",
+        "Relatórios simples",
+        "Suporte por email e WhatsApp"
+      ],
+      buttonText: "Escolher Básico",
+      popular: false
+    },
+    {
+      name: "Profissional",
+      price: "R$ 129,90",
       period: "/mês",
       description: "Para profissionais que crescem",
       features: [
@@ -33,16 +49,16 @@ const Pricing = () => {
         "Integração com calendário",
         "Suporte prioritário"
       ],
-      buttonText: "Escolher Pro",
+      buttonText: "Escolher Profissional",
       popular: true
     },
     {
       name: "Premium",
-      price: "R$ 59",
+      price: "R$ 299,90",
       period: "/mês",
       description: "Para clínicas e empresas",
       features: [
-        "Tudo do Pro +",
+        "Tudo do Profissional +",
         "Usuários ilimitados",
         "Lembretes por WhatsApp",
         "Relatórios avançados",
@@ -66,7 +82,7 @@ const Pricing = () => {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
         {plans.map((plan, index) => (
           <Card key={index} className={`relative ${plan.popular ? 'border-blue-500 shadow-2xl scale-105' : ''}`}>
             {plan.popular && (

@@ -12,8 +12,8 @@ const Upgrade = () => {
     {
       name: "Free",
       price: "R$ 0",
-      period: "para sempre",
-      description: "Ideal para profissionais autônomos",
+      period: "por 7 dias",
+      description: "Ideal para testar o sistema",
       features: [
         "1 agenda",
         "Até 50 agendamentos/mês",
@@ -37,9 +37,9 @@ const Upgrade = () => {
         "2 agendas",
         "Até 200 agendamentos/mês",
         "Lembretes por email",
-        "Prontuários básicos",
+        "Prontuários básicos no perfil médico e odontológico",
         "Relatórios simples",
-        "Suporte prioritário"
+        "Suporte por email e WhatsApp"
       ],
       popular: false,
       current: profile?.plan === 'basico',
@@ -49,13 +49,12 @@ const Upgrade = () => {
       name: "Profissional",
       price: "R$ 129,90",
       period: "/mês",
-      description: "Para clínicas com equipe",
+      description: "Para profissionais que crescem",
       features: [
-        "5 agendas",
         "Agendamentos ilimitados",
-        "Lembretes por email e WhatsApp",
-        "Prontuários completos",
-        "Relatórios avançados",
+        "Até 3 usuários",
+        "Lembretes por email",
+        "Relatórios básicos",
         "Integração com calendário",
         "Suporte prioritário"
       ],
@@ -67,15 +66,15 @@ const Upgrade = () => {
       name: "Premium",
       price: "R$ 299,90",
       period: "/mês",
-      description: "Para franchises e clínicas grandes",
+      description: "Para clínicas e empresas",
       features: [
-        "Agendas ilimitadas",
-        "Tudo do plano Profissional",
+        "Tudo do Profissional +",
+        "Usuários ilimitados",
+        "Lembretes por WhatsApp",
+        "Relatórios avançados",
         "API personalizada",
-        "White label",
-        "Relatórios personalizados",
-        "Gerente de conta dedicado",
-        "Suporte 24/7"
+        "Suporte 24/7",
+        "Consultoria gratuita"
       ],
       popular: false,
       current: profile?.plan === 'premium',

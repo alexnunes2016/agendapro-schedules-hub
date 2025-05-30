@@ -14,6 +14,7 @@ const Dashboard = () => {
   const { user, profile, signOut, loading: authLoading } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
+  const [hasShownPlanUpdate, setHasShownPlanUpdate] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -29,7 +30,6 @@ const Dashboard = () => {
     // Only fetch appointments when we have a user and auth is loaded
     if (!authLoading && user) {
       fetchAppointments();
-      checkForPlanUpdates();
     }
   }, [user, authLoading]);
 
@@ -54,41 +54,6 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching appointments:', error);
-    }
-  };
-
-  const checkForPlanUpdates = async () => {
-    if (!user) return;
-
-    try {
-      // Buscar o perfil atualizado para verificar mudanças no plano
-      const { data: updatedProfile, error } = await (supabase as any)
-        .from('profiles')
-        .select('plan')
-        .eq('id', user.id)
-        .single();
-
-      if (!error && updatedProfile && updatedProfile.plan !== profile?.plan) {
-        // Se o plano mudou, mostrar notificação
-        const planNames = {
-          free: 'Free',
-          basico: 'Básico',
-          profissional: 'Profissional',
-          premium: 'Premium'
-        };
-
-        toast({
-          title: "Plano atualizado!",
-          description: `Seu plano foi atualizado para ${planNames[updatedProfile.plan as keyof typeof planNames] || updatedProfile.plan}`,
-        });
-
-        // Recarregar a página para atualizar o contexto
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
-      }
-    } catch (error) {
-      console.error('Error checking plan updates:', error);
     }
   };
 
