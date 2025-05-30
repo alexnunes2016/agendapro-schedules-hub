@@ -64,7 +64,7 @@ const MedicalRecords = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <MedicalRecordsHeader onCreateNew={() => setShowCreateModal(true)} />
 
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-6">
         <MedicalRecordsList
           records={records}
           onViewRecord={handleViewRecord}
