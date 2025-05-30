@@ -50,12 +50,48 @@ export const NewAppointmentModal = ({ onAppointmentCreated }: NewAppointmentModa
     }
   };
 
+  const checkTimeSlotAvailability = async (date: string, time: string) => {
+    try {
+      const { data: existingAppointment, error } = await supabase
+        .from('appointments')
+        .select('id')
+        .eq('user_id', user?.id)
+        .eq('appointment_date', date)
+        .eq('appointment_time', time)
+        .in('status', ['confirmed', 'pending'])
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error checking availability:', error);
+        return false;
+      }
+
+      return !existingAppointment;
+    } catch (error) {
+      console.error('Error checking time slot availability:', error);
+      return false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
     setLoading(true);
     try {
+      // Verificar se o horário está disponível
+      const isAvailable = await checkTimeSlotAvailability(appointmentDate, appointmentTime);
+      
+      if (!isAvailable) {
+        toast({
+          title: "Horário não disponível",
+          description: "Já existe um agendamento para este horário. Por favor, escolha outro horário.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       const { error } = await (supabase as any)
         .from('appointments')
         .insert({
@@ -167,6 +203,7 @@ export const NewAppointmentModal = ({ onAppointmentCreated }: NewAppointmentModa
               type="date"
               value={appointmentDate}
               onChange={(e) => setAppointmentDate(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
               required
             />
           </div>

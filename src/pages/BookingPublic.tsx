@@ -16,6 +16,7 @@ const BookingPublic = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [professionalData, setProfessionalData] = useState<any>(null);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     service: "",
     date: "",
@@ -32,6 +33,13 @@ const BookingPublic = () => {
       fetchProfessionalData();
     }
   }, [userId]);
+
+  // Carregar horários ocupados quando a data for selecionada
+  useEffect(() => {
+    if (formData.date && userId) {
+      fetchBookedSlots(formData.date);
+    }
+  }, [formData.date, userId]);
 
   const fetchProfessionalData = async () => {
     try {
@@ -96,6 +104,27 @@ const BookingPublic = () => {
     }
   };
 
+  const fetchBookedSlots = async (selectedDate: string) => {
+    try {
+      const { data: appointments, error } = await supabase
+        .from('appointments')
+        .select('appointment_time')
+        .eq('user_id', userId)
+        .eq('appointment_date', selectedDate)
+        .in('status', ['confirmed', 'pending']);
+
+      if (error) {
+        console.error('Erro ao buscar agendamentos:', error);
+        return;
+      }
+
+      const bookedTimes = appointments?.map(apt => apt.appointment_time) || [];
+      setBookedSlots(bookedTimes);
+    } catch (error) {
+      console.error('Erro ao carregar horários ocupados:', error);
+    }
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -104,6 +133,35 @@ const BookingPublic = () => {
     e.preventDefault();
     
     try {
+      // Verificar novamente se o horário está disponível antes de criar o agendamento
+      const { data: existingAppointment, error: checkError } = await supabase
+        .from('appointments')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('appointment_date', formData.date)
+        .eq('appointment_time', formData.time)
+        .in('status', ['confirmed', 'pending'])
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Erro ao verificar disponibilidade:', checkError);
+        toast({
+          title: "Erro ao verificar disponibilidade",
+          description: "Tente novamente em alguns instantes",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (existingAppointment) {
+        toast({
+          title: "Horário não disponível",
+          description: "Este horário já está ocupado. Por favor, escolha outro horário.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const selectedService = professionalData?.services.find((s: any) => s.id === formData.service);
       
       // Criar agendamento no banco de dados
@@ -162,6 +220,7 @@ const BookingPublic = () => {
       clientEmail: "",
       notes: ""
     });
+    setBookedSlots([]);
   };
 
   if (loading) {
@@ -199,6 +258,9 @@ const BookingPublic = () => {
 
   const selectedService = professionalData.services.find((s: any) => s.id === formData.service);
 
+  // Filtrar horários disponíveis removendo os já ocupados
+  const availableSlots = professionalData.availableSlots.filter((slot: string) => !bookedSlots.includes(slot));
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
       {/* Header */}
@@ -233,7 +295,7 @@ const BookingPublic = () => {
             <DateTimeSelection
               selectedDate={formData.date}
               selectedTime={formData.time}
-              availableSlots={professionalData.availableSlots}
+              availableSlots={availableSlots}
               onDateChange={(date) => handleInputChange("date", date)}
               onTimeSelect={(time) => handleInputChange("time", time)}
               onNext={() => setStep(3)}

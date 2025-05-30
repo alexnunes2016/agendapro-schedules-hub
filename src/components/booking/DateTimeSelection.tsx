@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar } from "lucide-react";
+import { Calendar, Clock } from "lucide-react";
 
 interface DateTimeSelectionProps {
   selectedDate: string;
@@ -51,18 +51,29 @@ const DateTimeSelection = ({
         {selectedDate && (
           <div>
             <Label>Horários disponíveis</Label>
-            <div className="grid grid-cols-3 gap-3 mt-2">
-              {availableSlots.map((slot) => (
-                <Button
-                  key={slot}
-                  variant={selectedTime === slot ? "default" : "outline"}
-                  onClick={() => onTimeSelect(slot)}
-                  className="text-sm"
-                >
-                  {slot}
-                </Button>
-              ))}
-            </div>
+            {availableSlots.length === 0 ? (
+              <div className="mt-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-yellow-600" />
+                  <p className="text-sm text-yellow-800">
+                    Não há horários disponíveis para esta data. Por favor, escolha outra data.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-3 mt-2">
+                {availableSlots.map((slot) => (
+                  <Button
+                    key={slot}
+                    variant={selectedTime === slot ? "default" : "outline"}
+                    onClick={() => onTimeSelect(slot)}
+                    className="text-sm"
+                  >
+                    {slot}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -72,7 +83,7 @@ const DateTimeSelection = ({
           </Button>
           <Button 
             onClick={onNext}
-            disabled={!selectedDate || !selectedTime}
+            disabled={!selectedDate || !selectedTime || availableSlots.length === 0}
             className="flex-1"
           >
             Continuar
