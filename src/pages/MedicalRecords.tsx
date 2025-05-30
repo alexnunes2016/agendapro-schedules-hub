@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, FileText, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,34 +25,34 @@ interface MedicalRecord {
 }
 
 const MedicalRecords = () => {
-  const [user, setUser] = useState<any>(null);
   const [records, setRecords] = useState<MedicalRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
-  const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    const userData = localStorage.getItem("agendopro_user");
-    if (!userData) {
-      navigate("/login");
-      return;
+    if (!authLoading && user) {
+      fetchRecords();
+    } else if (!authLoading && !user) {
+      setLoading(false);
     }
-    setUser(JSON.parse(userData));
-    fetchRecords();
-  }, [navigate]);
+  }, [user, authLoading]);
 
   const fetchRecords = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('medical_records')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
+        console.error('Error fetching records:', error);
         toast({
           title: "Erro",
           description: "Não foi possível carregar os prontuários",
@@ -62,6 +62,7 @@ const MedicalRecords = () => {
         setRecords(data || []);
       }
     } catch (error) {
+      console.error('Error fetching records:', error);
       toast({
         title: "Erro",
         description: "Erro inesperado ao carregar prontuários",
@@ -89,6 +90,61 @@ const MedicalRecords = () => {
   const canCreateRecords = () => {
     return ['basico', 'profissional', 'premium'].includes(profile?.plan || '');
   };
+
+  // Show loading while auth is loading
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <FileText className="h-8 w-8 text-blue-600 mx-auto mb-4 animate-pulse" />
+          <p>Carregando prontuários...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to login if not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
+          <div className="px-6 py-4">
+            <div className="flex items-center space-x-4">
+              <Link to="/">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Voltar
+                </Button>
+              </Link>
+              <div className="flex items-center space-x-2">
+                <FileText className="h-6 w-6 text-blue-600" />
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Prontuários</h1>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div className="p-6">
+          <Card className="text-center py-12">
+            <CardContent>
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                Acesso restrito
+              </h3>
+              <p className="text-gray-500 dark:text-gray-500 mb-4">
+                Você precisa fazer login para acessar os prontuários
+              </p>
+              <Link to="/login">
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  Fazer Login
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (!canAccessMedicalRecords()) {
     return (
@@ -199,11 +255,7 @@ const MedicalRecords = () => {
       </header>
 
       <div className="p-6">
-        {loading ? (
-          <div className="text-center py-8">
-            <p>Carregando prontuários...</p>
-          </div>
-        ) : records.length > 0 ? (
+        {records.length > 0 ? (
           <div className="space-y-4">
             {records.map((record) => (
               <MedicalRecordCard
