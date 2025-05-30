@@ -21,13 +21,19 @@ export const useAdminCheck = () => {
       }
 
       try {
+        console.log('Checking admin status for user:', user.id, 'profile:', profile);
+        
         // Check if user has admin role in profile
         if (profile?.role === 'admin') {
+          console.log('User is admin via profile');
           setIsAdmin(true);
           setLoading(false);
         } else if (profile) {
           // Only call the function if we have a profile loaded
-          const { data, error } = await (supabase as any).rpc('is_admin');
+          console.log('Calling is_admin RPC function');
+          const { data, error } = await supabase.rpc('is_admin');
+          console.log('is_admin RPC result:', { data, error });
+          
           if (!error && data) {
             setIsAdmin(true);
           } else {

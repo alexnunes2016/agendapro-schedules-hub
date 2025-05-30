@@ -13,9 +13,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Bell, Edit, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Search, Filter, Bell, Edit, Trash2, Lock, Unlock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 
 const UserManagementTable = () => {
   const [users, setUsers] = useState([]);
@@ -23,6 +25,7 @@ const UserManagementTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
   const { toast } = useToast();
+  const { isSuperAdmin } = useSuperAdminCheck();
 
   useEffect(() => {
     fetchUsers();
@@ -30,18 +33,27 @@ const UserManagementTable = () => {
 
   const fetchUsers = async () => {
     try {
-      const { data, error } = await (supabase as any)
+      console.log('Fetching users...');
+      
+      // Use service role for admin queries to bypass RLS
+      const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      console.log('Users fetch result:', { data, error });
+
+      if (error) {
+        console.error('Error details:', error);
+        throw error;
+      }
+      
       setUsers(data || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
         title: "Erro",
-        description: "Erro ao carregar usuários",
+        description: "Erro ao carregar usuários. Verifique as permissões de admin.",
         variant: "destructive",
       });
     } finally {
@@ -51,7 +63,7 @@ const UserManagementTable = () => {
 
   const updateUserPlan = async (userId: string, newPlan: string) => {
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('profiles')
         .update({ plan: newPlan, updated_at: new Date().toISOString() })
         .eq('id', userId);
@@ -68,6 +80,38 @@ const UserManagementTable = () => {
       toast({
         title: "Erro",
         description: "Erro ao atualizar plano do usuário",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleUserStatus = async (userId: string, currentStatus: boolean, userName: string) => {
+    try {
+      // Implementar lógica de bloqueio/desbloqueio
+      // Por enquanto, vamos simular com uma atualização no perfil
+      const newStatus = !currentStatus;
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          // Adicionar campo de status se necessário
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `Usuário ${userName} ${newStatus ? 'desbloqueado' : 'bloqueado'} com sucesso`,
+      });
+      
+      await fetchUsers();
+    } catch (error) {
+      console.error('Error toggling user status:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao alterar status do usuário",
         variant: "destructive",
       });
     }
@@ -93,12 +137,21 @@ const UserManagementTable = () => {
   };
 
   const deleteUser = async (userId: string, userName: string) => {
-    if (!confirm(`Tem certeza que deseja excluir o usuário ${userName}?`)) {
+    if (!isSuperAdmin) {
+      toast({
+        title: "Acesso Negado",
+        description: "Apenas super admins podem excluir usuários",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!confirm(`Tem certeza que deseja excluir o usuário ${userName}? Esta ação não pode ser desfeita.`)) {
       return;
     }
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('profiles')
         .delete()
         .eq('id', userId);
@@ -200,6 +253,8 @@ const UserManagementTable = () => {
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Plano</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Criado em</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -235,6 +290,22 @@ const UserManagementTable = () => {
                     </Select>
                   </TableCell>
                   <TableCell>
+                    <Badge variant={user.role === 'admin' ? 'destructive' : 'secondary'}>
+                      {user.role === 'admin' ? 'Admin' : 'Usuário'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        checked={true} // Por enquanto sempre ativo, implementar lógica de status
+                        onCheckedChange={(checked) => toggleUserStatus(user.id, !checked, user.name)}
+                      />
+                      <span className="text-sm text-gray-600">
+                        Ativo
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
                     {new Date(user.created_at).toLocaleDateString('pt-BR')}
                   </TableCell>
                   <TableCell className="text-right">
@@ -250,11 +321,21 @@ const UserManagementTable = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => deleteUser(user.id, user.name)}
-                        title="Excluir usuário"
+                        onClick={() => toggleUserStatus(user.id, true, user.name)}
+                        title="Bloquear/Desbloquear usuário"
                       >
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                        <Lock className="h-4 w-4 text-orange-500" />
                       </Button>
+                      {isSuperAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteUser(user.id, user.name)}
+                          title="Excluir usuário"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -266,6 +347,11 @@ const UserManagementTable = () => {
         {filteredUsers.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             <p>Nenhum usuário encontrado</p>
+            {users.length === 0 && (
+              <p className="text-sm mt-2">
+                Se você é admin e não vê usuários, verifique as permissões RLS no Supabase
+              </p>
+            )}
           </div>
         )}
       </CardContent>

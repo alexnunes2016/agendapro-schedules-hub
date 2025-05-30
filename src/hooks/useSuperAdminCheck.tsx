@@ -21,12 +21,18 @@ export const useSuperAdminCheck = () => {
       }
 
       try {
+        console.log('Checking super admin status for user:', user.id, 'profile:', profile);
+        
         // Verificar se é o email específico do super admin
         if (profile?.email === 'suporte@judahtech.com.br' && profile?.role === 'admin') {
+          console.log('User is super admin via profile check');
           setIsSuperAdmin(true);
         } else {
           // Chamar a função RPC como backup
-          const { data, error } = await (supabase as any).rpc('is_super_admin');
+          console.log('Calling is_super_admin RPC function');
+          const { data, error } = await supabase.rpc('is_super_admin');
+          console.log('is_super_admin RPC result:', { data, error });
+          
           if (!error && data) {
             setIsSuperAdmin(true);
           } else {
