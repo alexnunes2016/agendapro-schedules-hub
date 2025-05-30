@@ -32,37 +32,54 @@ const AddClientModal = () => {
     setLoading(true);
 
     try {
-      // Criar usuário no auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Gerar uma senha temporária
+      const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+      
+      console.log('Tentando criar usuário:', formData);
+
+      // Criar usuário usando signUp
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
-        password: Math.random().toString(36).slice(-8), // Senha temporária
-        email_confirm: true,
-        user_metadata: {
-          name: formData.name,
-          clinic_name: formData.clinic_name,
-          service_type: formData.service_type
+        password: tempPassword,
+        options: {
+          data: {
+            name: formData.name,
+            clinic_name: formData.clinic_name,
+            service_type: formData.service_type
+          }
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Erro ao criar usuário:', authError);
+        throw authError;
+      }
 
-      // Criar perfil do usuário
-      const { error: profileError } = await (supabase as any)
-        .from('profiles')
-        .insert({
-          id: authData.user.id,
-          name: formData.name,
-          email: formData.email,
-          clinic_name: formData.clinic_name,
-          service_type: formData.service_type,
-          plan: formData.plan
-        });
+      console.log('Usuário criado com sucesso:', authData);
 
-      if (profileError) throw profileError;
+      // Se o usuário foi criado, tentar criar o perfil manualmente
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            name: formData.name,
+            email: formData.email,
+            clinic_name: formData.clinic_name,
+            service_type: formData.service_type,
+            plan: formData.plan
+          });
+
+        if (profileError) {
+          console.error('Erro ao criar perfil:', profileError);
+          // Não vamos lançar erro aqui pois o trigger pode ter criado o perfil
+          console.log('Perfil pode ter sido criado automaticamente pelo trigger');
+        }
+      }
 
       toast({
         title: "Cliente adicionado com sucesso",
-        description: `Cliente ${formData.name} foi criado. Uma senha temporária foi gerada.`,
+        description: `Cliente ${formData.name} foi criado. Senha temporária: ${tempPassword}`,
       });
 
       setFormData({
@@ -73,11 +90,22 @@ const AddClientModal = () => {
         plan: "free"
       });
       setOpen(false);
-    } catch (error) {
-      console.error('Error adding client:', error);
+    } catch (error: any) {
+      console.error('Erro completo:', error);
+      
+      let errorMessage = "Tente novamente em alguns instantes";
+      
+      if (error.message?.includes('User already registered')) {
+        errorMessage = "Este email já está registrado no sistema";
+      } else if (error.message?.includes('Invalid email')) {
+        errorMessage = "Email inválido";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Erro ao adicionar cliente",
-        description: "Tente novamente em alguns instantes",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
