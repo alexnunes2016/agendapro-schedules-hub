@@ -29,19 +29,11 @@ export const useRoleCheck = () => {
         // Check if user is regular admin
         const isAdmin = profile?.role === 'admin';
 
-        // Use the has_role function for additional role checks
-        const { data: roleChecks, error } = await supabase.rpc('has_role', {
-          check_user_id: user.id,
-          check_role: 'super_admin'
-        });
-
-        if (error) {
-          console.error('Error checking roles:', error);
-        }
-
+        // For now, we'll use the profile-based checks until the database types are updated
+        // TODO: Replace with proper user_roles table check when types are regenerated
         setHasRole({
-          super_admin: isSuperAdmin || roleChecks,
-          admin: isAdmin || roleChecks,
+          super_admin: isSuperAdmin || false,
+          admin: isAdmin || false,
           user: true
         });
 

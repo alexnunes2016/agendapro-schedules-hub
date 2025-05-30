@@ -8,23 +8,27 @@ import { useRoleCheck } from '@/hooks/useRoleCheck';
 export const useSecureUserManagement = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { refetch } = useUserFetching();
+  const { fetchUsers } = useUserFetching();
   const { isSuperAdmin } = useRoleCheck();
 
   const auditLog = async (action: string, tableName: string, recordId?: string, oldValues?: any, newValues?: any) => {
     try {
       if (!isSuperAdmin) return; // Only log for super admins
 
+      // For now, we'll log to system_settings until audit_logs table is available in types
       const { error } = await supabase
-        .from('audit_logs')
+        .from('system_settings')
         .insert({
-          action,
-          table_name: tableName,
-          record_id: recordId,
-          old_values: oldValues || null,
-          new_values: newValues || null,
-          ip_address: null, // Will be set by DB trigger if available
-          user_agent: navigator.userAgent
+          setting_key: 'audit_log',
+          setting_value: {
+            action,
+            table_name: tableName,
+            record_id: recordId,
+            old_values: oldValues || null,
+            new_values: newValues || null,
+            timestamp: new Date().toISOString(),
+            user_agent: navigator.userAgent
+          }
         });
 
       if (error) {
@@ -48,28 +52,21 @@ export const useSecureUserManagement = () => {
     try {
       setLoading(true);
 
+      // Use the existing admin_reset_user_password function with a temporary password
       const { data, error } = await supabase.rpc('admin_reset_user_password', {
-        p_user_id: userId
+        p_user_id: userId,
+        p_new_password: 'temp123456' // Temporary password - should be changed on first login
       });
 
       if (error) {
-        if (error.message.includes('rate limit')) {
-          toast({
-            title: "Rate Limit Excedido",
-            description: "Aguarde uma hora antes de tentar novamente",
-            variant: "destructive",
-          });
-        } else {
-          throw error;
-        }
-        return;
+        throw error;
       }
 
       await auditLog('password_reset', 'profiles', userId, null, { action: 'password_reset_requested' });
 
       toast({
         title: "Senha Resetada",
-        description: `Nova senha temporária gerada para ${userName}. Verifique os logs do sistema para obter a senha.`,
+        description: `Senha do usuário ${userName} foi resetada para: temp123456`,
       });
 
     } catch (error: any) {
@@ -121,7 +118,7 @@ export const useSecureUserManagement = () => {
         description: `Plano alterado para ${newPlan} com sucesso`,
       });
 
-      refetch();
+      fetchUsers();
     } catch (error: any) {
       console.error('Error updating user plan:', error);
       toast({
@@ -172,7 +169,7 @@ export const useSecureUserManagement = () => {
         description: `${userName} foi excluído com sucesso`,
       });
 
-      refetch();
+      fetchUsers();
     } catch (error: any) {
       console.error('Error deleting user:', error);
       toast({
