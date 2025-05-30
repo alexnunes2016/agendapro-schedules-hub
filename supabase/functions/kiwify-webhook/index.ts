@@ -25,10 +25,25 @@ serve(async (req) => {
 
       // Verificar se é uma venda confirmada
       if (body.event_type === 'sale_approved' || body.event_type === 'sale_confirmed') {
+        let customerEmail = body.customer_email || body.Customer?.email;
+        
+        // Se não tiver email no payload, tentar extrair da query string salva
+        if (!customerEmail && body.custom_fields) {
+          customerEmail = body.custom_fields.email;
+        }
+
+        if (!customerEmail) {
+          console.error('Customer email not found in webhook payload');
+          return new Response(
+            JSON.stringify({ error: 'Customer email not found' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+          )
+        }
+
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
-          .eq('email', body.customer_email)
+          .eq('email', customerEmail)
           .single()
 
         if (profileError) {
@@ -39,15 +54,17 @@ serve(async (req) => {
           )
         }
 
-        // Determinar o plano baseado no produto vendido
+        // Determinar o plano baseado no produto vendido ou URL
         let newPlan = 'free'
         const productName = body.product_name?.toLowerCase() || ''
+        const productId = body.product_id || ''
         
-        if (productName.includes('básico') || productName.includes('basico')) {
+        // Mapear pelos IDs dos produtos da Kiwify
+        if (productId === 'dIQXZeM' || productName.includes('básico') || productName.includes('basico')) {
           newPlan = 'basico'
-        } else if (productName.includes('profissional')) {
+        } else if (productId === 'ChhN5ug' || productName.includes('profissional')) {
           newPlan = 'profissional'
-        } else if (productName.includes('premium')) {
+        } else if (productId === 'GasXHJx' || productName.includes('premium')) {
           newPlan = 'premium'
         }
 
@@ -70,14 +87,31 @@ serve(async (req) => {
 
         console.log(`Updated user ${profile.email} to plan ${newPlan}`)
 
+        // Log da transação para auditoria
+        console.log('Transaction details:', {
+          user_id: profile.id,
+          user_email: profile.email,
+          old_plan: profile.plan,
+          new_plan: newPlan,
+          product_id: productId,
+          product_name: body.product_name,
+          transaction_id: body.transaction_id || body.id,
+          amount: body.amount || body.value,
+          timestamp: new Date().toISOString()
+        });
+
         return new Response(
-          JSON.stringify({ success: true, plan: newPlan }),
+          JSON.stringify({ 
+            success: true, 
+            plan: newPlan,
+            user_email: profile.email 
+          }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
 
       return new Response(
-        JSON.stringify({ message: 'Event not processed' }),
+        JSON.stringify({ message: 'Event not processed', event_type: body.event_type }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }

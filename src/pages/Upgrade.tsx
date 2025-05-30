@@ -1,10 +1,13 @@
 
+import { useAuth } from "@/hooks/useAuth";
 import UpgradeHeader from "@/components/UpgradeHeader";
 import UpgradeHero from "@/components/UpgradeHero";
 import PricingCard from "@/components/PricingCard";
 import UpgradeFAQ from "@/components/UpgradeFAQ";
 
 const Upgrade = () => {
+  const { user, profile } = useAuth();
+
   const plans = [
     {
       name: "Free",
@@ -22,7 +25,7 @@ const Upgrade = () => {
         "Sem prontuários",
         "Sem relatórios"
       ],
-      current: true,
+      current: profile?.plan === 'free',
       checkoutUrl: null
     },
     {
@@ -39,7 +42,8 @@ const Upgrade = () => {
         "Suporte prioritário"
       ],
       popular: false,
-      checkoutUrl: "https://kiwify.com.br/checkout/BASIC_PLAN_ID" // Substitua pelo ID real do produto
+      current: profile?.plan === 'basico',
+      checkoutUrl: "https://pay.kiwify.com.br/dIQXZeM"
     },
     {
       name: "Profissional",
@@ -56,7 +60,8 @@ const Upgrade = () => {
         "Suporte prioritário"
       ],
       popular: true,
-      checkoutUrl: "https://kiwify.com.br/checkout/PROFESSIONAL_PLAN_ID" // Substitua pelo ID real do produto
+      current: profile?.plan === 'profissional',
+      checkoutUrl: "https://pay.kiwify.com.br/ChhN5ug"
     },
     {
       name: "Premium",
@@ -73,7 +78,8 @@ const Upgrade = () => {
         "Suporte 24/7"
       ],
       popular: false,
-      checkoutUrl: "https://kiwify.com.br/checkout/PREMIUM_PLAN_ID" // Substitua pelo ID real do produto
+      current: profile?.plan === 'premium',
+      checkoutUrl: "https://pay.kiwify.com.br/GasXHJx"
     }
   ];
 
@@ -82,8 +88,21 @@ const Upgrade = () => {
       return;
     }
     
+    // Construir URL com email do usuário
+    const email = user?.email || profile?.email;
+    const userId = user?.id;
+    
+    let checkoutUrl = plan.checkoutUrl;
+    
+    if (email) {
+      checkoutUrl += `?email=${encodeURIComponent(email)}`;
+      if (userId) {
+        checkoutUrl += `&user_id=${encodeURIComponent(userId)}`;
+      }
+    }
+    
     // Redirecionar para o checkout do Kiwify
-    window.open(plan.checkoutUrl, '_blank');
+    window.open(checkoutUrl, '_blank');
   };
 
   return (

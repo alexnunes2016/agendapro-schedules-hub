@@ -3,14 +3,23 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Users, DollarSign, Calendar, TrendingUp } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Users, DollarSign, Calendar, TrendingUp, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { supabase } from "@/integrations/supabase/client";
+import UserManagementTable from "@/components/admin/UserManagementTable";
 
 const AdminDashboard = () => {
   const { user } = useAuth();
   const { isAdmin, loading } = useAdminCheck();
   const navigate = useNavigate();
+  const [adminStats, setAdminStats] = useState({
+    totalUsers: 0,
+    activeSubscriptions: 0,
+    monthlyRevenue: 0,
+    newUsersThisMonth: 0
+  });
 
   useEffect(() => {
     if (!user) {
@@ -24,40 +33,48 @@ const AdminDashboard = () => {
     }
   }, [user, isAdmin, loading, navigate]);
 
-  // Dados simulados do admin
-  const adminStats = {
-    totalUsers: 1250,
-    activeSubscriptions: 890,
-    monthlyRevenue: 125000,
-    newUsersThisMonth: 78
-  };
-
-  const recentUsers = [
-    {
-      id: 1,
-      name: "Dr. Carlos Silva",
-      email: "carlos@clinica.com",
-      plan: "profissional",
-      joinDate: "2024-01-10",
-      status: "active"
-    },
-    {
-      id: 2,
-      name: "Maria Barbeira",
-      email: "maria@barbearia.com",
-      plan: "basico",
-      joinDate: "2024-01-08",
-      status: "active"
-    },
-    {
-      id: 3,
-      name: "Ana Dentista",
-      email: "ana@odonto.com",
-      plan: "free",
-      joinDate: "2024-01-05",
-      status: "trial"
+  useEffect(() => {
+    if (isAdmin) {
+      fetchAdminStats();
     }
-  ];
+  }, [isAdmin]);
+
+  const fetchAdminStats = async () => {
+    try {
+      // Buscar estatísticas dos usuários
+      const { data: users, error: usersError } = await (supabase as any)
+        .from('profiles')
+        .select('plan, created_at');
+
+      if (usersError) throw usersError;
+
+      const totalUsers = users?.length || 0;
+      const activeSubscriptions = users?.filter(u => u.plan !== 'free').length || 0;
+      
+      // Calcular usuários novos este mês
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const newUsersThisMonth = users?.filter(u => {
+        const userDate = new Date(u.created_at);
+        return userDate.getMonth() === currentMonth && userDate.getFullYear() === currentYear;
+      }).length || 0;
+
+      // Estimativa de receita mensal (valores dos planos)
+      const planValues = { basico: 49.90, profissional: 129.90, premium: 299.90 };
+      const monthlyRevenue = users?.reduce((total, user) => {
+        return total + (planValues[user.plan as keyof typeof planValues] || 0);
+      }, 0) || 0;
+
+      setAdminStats({
+        totalUsers,
+        activeSubscriptions,
+        monthlyRevenue,
+        newUsersThisMonth
+      });
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -135,7 +152,7 @@ const AdminDashboard = () => {
                 {adminStats.activeSubscriptions.toLocaleString()}
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {((adminStats.activeSubscriptions / adminStats.totalUsers) * 100).toFixed(1)}% conversão
+                {adminStats.totalUsers > 0 ? ((adminStats.activeSubscriptions / adminStats.totalUsers) * 100).toFixed(1) : 0}% conversão
               </p>
             </CardContent>
           </Card>
@@ -143,15 +160,15 @@ const AdminDashboard = () => {
           <Card className="border-l-4 border-l-purple-600">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Receita Mensal
+                Receita Mensal Est.
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-800 dark:text-white">
-                R$ {(adminStats.monthlyRevenue / 1000).toFixed(0)}k
+                R$ {(adminStats.monthlyRevenue / 1000).toFixed(1)}k
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                +15% vs mês anterior
+                Estimativa baseada nos planos
               </p>
             </CardContent>
           </Card>
@@ -173,50 +190,40 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        {/* Recent Users */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Usuários Recentes</CardTitle>
-              <Button variant="outline" size="sm">
-                Ver Todos
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentUsers.map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
-                      <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-800 dark:text-white">{user.name}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <p className="text-sm font-medium capitalize">{user.plan}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {new Date(user.joinDate).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      user.status === 'active' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {user.status === 'active' ? 'Ativo' : 'Trial'}
-                    </span>
-                  </div>
+        {/* Tabs */}
+        <Tabs defaultValue="users" className="space-y-6">
+          <TabsList className="grid w-full md:w-auto grid-cols-2">
+            <TabsTrigger value="users" className="flex items-center space-x-2">
+              <Users className="h-4 w-4" />
+              <span>Usuários</span>
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="flex items-center space-x-2">
+              <BarChart3 className="h-4 w-4" />
+              <span>Relatórios</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="users">
+            <UserManagementTable />
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <Card>
+              <CardHeader>
+                <CardTitle>Relatórios de Upgrades</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                  <p className="text-lg font-medium mb-2">Relatórios em Desenvolvimento</p>
+                  <p className="text-sm">
+                    Os relatórios detalhados de upgrades e analytics estarão disponíveis em breve.
+                  </p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
