@@ -38,7 +38,7 @@ const Dashboard = () => {
       weekEnd.setDate(weekEnd.getDate() + 6);
 
       // Get recent appointments
-      const { data: recentAppointments, error: recentError } = await supabase
+      const { data: recentAppointments, error: recentError } = await (supabase as any)
         .from('appointments')
         .select('*, services(name)')
         .eq('user_id', user.id)
@@ -52,7 +52,7 @@ const Dashboard = () => {
       }
 
       // Count today's appointments
-      const { count: todayCountResult } = await supabase
+      const { count: todayCountResult } = await (supabase as any)
         .from('appointments')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
@@ -61,7 +61,7 @@ const Dashboard = () => {
       setTodayCount(todayCountResult || 0);
 
       // Count week's appointments
-      const { count: weekCountResult } = await supabase
+      const { count: weekCountResult } = await (supabase as any)
         .from('appointments')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)

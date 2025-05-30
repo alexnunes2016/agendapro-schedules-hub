@@ -27,7 +27,7 @@ const Services = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('services')
         .select('*')
         .eq('user_id', user.id)
@@ -52,9 +52,9 @@ const Services = () => {
     if (!confirm('Tem certeza que deseja excluir este serviço?')) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('services')
-        .update({ is_active: false })
+        .update({ is_active: false } as any)
         .eq('id', serviceId)
         .eq('user_id', user?.id);
 

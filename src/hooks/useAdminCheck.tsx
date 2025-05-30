@@ -22,7 +22,7 @@ export const useAdminCheck = () => {
           setIsAdmin(true);
         } else {
           // Fallback: call the database function to double-check
-          const { data, error } = await supabase.rpc('is_admin');
+          const { data, error } = await (supabase as any).rpc('is_admin');
           if (!error && data) {
             setIsAdmin(true);
           } else {
