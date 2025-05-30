@@ -9,12 +9,14 @@ import { Calendar, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
+import ForgotPasswordModal from "@/components/ForgotPasswordModal";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn, user, loading: authLoading } = useAuth();
@@ -112,6 +114,16 @@ const Login = () => {
                 </Button>
               </div>
             </div>
+
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="text-sm text-blue-600 hover:underline"
+              >
+                Esqueci minha senha
+              </button>
+            </div>
             
             <Button 
               type="submit" 
@@ -137,6 +149,11 @@ const Login = () => {
           </div>
         </CardContent>
       </Card>
+
+      <ForgotPasswordModal 
+        open={showForgotPassword} 
+        onOpenChange={setShowForgotPassword} 
+      />
     </div>
   );
 };
