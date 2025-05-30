@@ -1,18 +1,20 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { UserActions } from "./UserActions";
-import { UserPlanSelect } from "./UserPlanSelect";
+import UserActions from "./UserActions";
+import UserPlanSelect from "./UserPlanSelect";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 
 interface UserManagementTableProps {
-  filteredUsers: any[];
+  filteredUsers?: any[];
 }
 
 export const UserManagementTable = ({ filteredUsers }: UserManagementTableProps) => {
   const { isSuperAdmin } = useSuperAdminCheck();
   const {
+    users,
+    loading,
     updateUserPlan,
     toggleUserStatus,
     sendNotification,
@@ -21,6 +23,9 @@ export const UserManagementTable = ({ filteredUsers }: UserManagementTableProps)
     editPlanExpiration,
     deleteUser,
   } = useUserManagement();
+
+  // Use filteredUsers if provided, otherwise use all users
+  const displayUsers = filteredUsers || users;
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
@@ -50,6 +55,10 @@ export const UserManagementTable = ({ filteredUsers }: UserManagementTableProps)
     );
   };
 
+  if (loading) {
+    return <div className="text-center py-8">Carregando usuários...</div>;
+  }
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -66,7 +75,7 @@ export const UserManagementTable = ({ filteredUsers }: UserManagementTableProps)
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredUsers.map((user: any) => (
+          {displayUsers.map((user: any) => (
             <TableRow key={user.id}>
               <TableCell className="font-medium">{user.name}</TableCell>
               <TableCell>{user.email}</TableCell>

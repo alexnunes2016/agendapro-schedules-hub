@@ -2,7 +2,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, BarChart3 } from "lucide-react";
-import UserManagementTable from "@/components/admin/UserManagementTable";
+import { UserManagementTable } from "@/components/admin/UserManagementTable";
 
 const AdminTabs = () => {
   return (
