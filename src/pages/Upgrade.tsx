@@ -22,7 +22,8 @@ const Upgrade = () => {
         "Sem prontuários",
         "Sem relatórios"
       ],
-      current: true
+      current: true,
+      checkoutUrl: null
     },
     {
       name: "Básico",
@@ -37,7 +38,8 @@ const Upgrade = () => {
         "Relatórios simples",
         "Suporte prioritário"
       ],
-      popular: false
+      popular: false,
+      checkoutUrl: "https://kiwify.com.br/checkout/BASIC_PLAN_ID" // Substitua pelo ID real do produto
     },
     {
       name: "Profissional",
@@ -53,7 +55,8 @@ const Upgrade = () => {
         "Integração com calendário",
         "Suporte prioritário"
       ],
-      popular: true
+      popular: true,
+      checkoutUrl: "https://kiwify.com.br/checkout/PROFESSIONAL_PLAN_ID" // Substitua pelo ID real do produto
     },
     {
       name: "Premium",
@@ -69,9 +72,19 @@ const Upgrade = () => {
         "Gerente de conta dedicado",
         "Suporte 24/7"
       ],
-      popular: false
+      popular: false,
+      checkoutUrl: "https://kiwify.com.br/checkout/PREMIUM_PLAN_ID" // Substitua pelo ID real do produto
     }
   ];
+
+  const handlePlanSelection = (plan: any) => {
+    if (plan.current || !plan.checkoutUrl) {
+      return;
+    }
+    
+    // Redirecionar para o checkout do Kiwify
+    window.open(plan.checkoutUrl, '_blank');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -183,6 +196,7 @@ const Upgrade = () => {
                         : 'bg-gray-600 hover:bg-gray-700'
                   }`}
                   disabled={plan.current}
+                  onClick={() => handlePlanSelection(plan)}
                 >
                   {plan.current ? 'Plano Atual' : 'Escolher Plano'}
                 </Button>
