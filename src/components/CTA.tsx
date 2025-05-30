@@ -13,7 +13,7 @@ const CTA = () => {
       </p>
       <Link to="/register">
         <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-4 text-lg">
-          Criar Conta Gratuita
+          Começar Grátis Agora
         </Button>
       </Link>
     </section>

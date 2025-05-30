@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Settings as SettingsIcon, Save, Shield } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Settings as SettingsIcon, Save, Shield, User, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
+import WhatsAppSettings from "@/components/WhatsAppSettings";
 
 const Settings = () => {
   const { user, profile, loading: authLoading } = useAuth();
@@ -120,138 +122,157 @@ const Settings = () => {
       </header>
 
       <div className="p-6 max-w-4xl mx-auto">
-        {/* Profile Settings */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Informações do Perfil</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome completo</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  placeholder="Seu nome completo"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  readOnly
-                  className="bg-gray-100 dark:bg-gray-800"
-                  placeholder="seu@email.com"
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="clinicName">Nome da clínica/estabelecimento</Label>
-              <Input
-                id="clinicName"
-                value={formData.clinicName}
-                onChange={(e) => handleInputChange("clinicName", e.target.value)}
-                placeholder="Nome do seu estabelecimento"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="serviceType">Tipo de serviço</Label>
-              <Input
-                id="serviceType"
-                value={formData.serviceType}
-                onChange={(e) => handleInputChange("serviceType", e.target.value)}
-                placeholder="Ex: Clínica médica, Salão de beleza, etc."
-              />
-            </div>
-            
-            <Button 
-              onClick={handleSave} 
-              disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {loading ? "Salvando..." : "Salvar Alterações"}
-            </Button>
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="profile">Perfil</TabsTrigger>
+            <TabsTrigger value="notifications">Notificações</TabsTrigger>
+            <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
+          </TabsList>
 
-        {/* Account Info */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Informações da Conta</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium">Plano Atual</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">
-                    {profile?.plan || 'Free'}
-                  </p>
-                </div>
-                {profile?.plan === 'free' && (
-                  <Link to="/upgrade">
-                    <Button className="bg-yellow-600 hover:bg-yellow-700">
-                      Fazer Upgrade
-                    </Button>
-                  </Link>
-                )}
-              </div>
-              
-              {profile?.role === 'admin' && (
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium">Função</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Administrador
-                      {isSuperAdmin && " (Super Admin)"}
-                    </p>
+          <TabsContent value="profile" className="space-y-6">
+            {/* Profile Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <User className="h-5 w-5 mr-2" />
+                  Informações do Perfil
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome completo</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => handleInputChange("name", e.target.value)}
+                      placeholder="Seu nome completo"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      readOnly
+                      className="bg-gray-100 dark:bg-gray-800"
+                      placeholder="seu@email.com"
+                    />
                   </div>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="clinicName">Nome da clínica/estabelecimento</Label>
+                  <Input
+                    id="clinicName"
+                    value={formData.clinicName}
+                    onChange={(e) => handleInputChange("clinicName", e.target.value)}
+                    placeholder="Nome do seu estabelecimento"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="serviceType">Tipo de serviço</Label>
+                  <Input
+                    id="serviceType"
+                    value={formData.serviceType}
+                    onChange={(e) => handleInputChange("serviceType", e.target.value)}
+                    placeholder="Ex: Clínica médica, Salão de beleza, etc."
+                  />
+                </div>
+                
+                <Button 
+                  onClick={handleSave} 
+                  disabled={loading}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {loading ? "Salvando..." : "Salvar Alterações"}
+                </Button>
+              </CardContent>
+            </Card>
 
-        {/* Notification Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Notificações</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium">Lembretes por Email</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Enviar lembretes de agendamento por email
-                  </p>
+            {/* Account Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Informações da Conta</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">Plano Atual</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+                        {profile?.plan || 'Free'}
+                      </p>
+                    </div>
+                    {profile?.plan === 'free' && (
+                      <Link to="/upgrade">
+                        <Button className="bg-yellow-600 hover:bg-yellow-700">
+                          Fazer Upgrade
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                  
+                  {profile?.role === 'admin' && (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">Função</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Administrador
+                          {isSuperAdmin && " (Super Admin)"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <Button variant="outline" size="sm">
-                  {profile?.plan === 'free' ? 'Disponível no Pro' : 'Ativar'}
-                </Button>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium">Lembretes por WhatsApp</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Enviar lembretes de agendamento por WhatsApp
-                  </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="notifications" className="space-y-6">
+            {/* Notification Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Notificações</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">Lembretes por Email</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Enviar lembretes de agendamento por email
+                      </p>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      {profile?.plan === 'free' ? 'Disponível no Pro' : 'Ativar'}
+                    </Button>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">Lembretes por WhatsApp</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Enviar lembretes de agendamento por WhatsApp
+                      </p>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      {profile?.plan === 'free' ? 'Disponível no Premium' : 'Ativar'}
+                    </Button>
+                  </div>
                 </div>
-                <Button variant="outline" size="sm">
-                  {profile?.plan === 'free' ? 'Disponível no Premium' : 'Ativar'}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="whatsapp" className="space-y-6">
+            <WhatsAppSettings userId={user?.id} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

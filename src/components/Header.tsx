@@ -33,7 +33,7 @@ const Header = ({ darkMode, toggleDarkMode }: HeaderProps) => {
           </Link>
           <Link to="/register">
             <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-              Cadastrar Grátis
+              Começar Grátis
             </Button>
           </Link>
         </div>
