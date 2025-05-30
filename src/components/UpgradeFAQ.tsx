@@ -9,7 +9,7 @@ const UpgradeFAQ = () => {
     },
     {
       question: "Como funciona o período de teste?",
-      answer: "Oferecemos 7 dias gratuitos para testar todos os recursos do plano escolhido."
+      answer: "Oferecemos 14 dias gratuitos para testar todos os recursos do plano escolhido."
     },
     {
       question: "Posso fazer upgrade/downgrade do meu plano?",

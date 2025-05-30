@@ -9,7 +9,7 @@ const Pricing = () => {
     {
       name: "Gratuito",
       price: "R$ 0",
-      period: "por 7 dias",
+      period: "por 14 dias",
       description: "Ideal para testar o sistema",
       features: [
         "Até 50 agendamentos/mês",

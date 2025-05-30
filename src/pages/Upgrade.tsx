@@ -12,7 +12,7 @@ const Upgrade = () => {
     {
       name: "Free",
       price: "R$ 0",
-      period: "por 7 dias",
+      period: "por 14 dias",
       description: "Ideal para testar o sistema",
       features: [
         "1 agenda",
