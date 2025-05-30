@@ -29,15 +29,24 @@ const ForgotPasswordModal = ({ open, onOpenChange }: ForgotPasswordModalProps) =
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/login`,
       });
 
       if (error) {
-        toast({
-          title: "Erro",
-          description: error.message,
-          variant: "destructive",
-        });
+        // Check if it's the specific email provider error
+        if (error.message?.includes('MailChannels') || error.message?.includes('Blocklist')) {
+          toast({
+            title: "Configuração de Email Necessária",
+            description: "O provedor de email precisa ser configurado. Entre em contato com o suporte.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Erro",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
           title: "Email enviado!",
