@@ -14,12 +14,37 @@ const OrganizationUsers = () => {
   const { users, loading } = useOrganizationUsers();
   const { profile } = useAuth();
 
+  console.log('OrganizationUsers page - Profile:', profile);
+  console.log('OrganizationUsers page - Users:', users);
+  console.log('OrganizationUsers page - Loading:', loading);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-400">Carregando usuários...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile?.organization_id) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+            Organização não encontrada
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Não foi possível carregar as informações da organização.
+          </p>
+          <Link to="/settings">
+            <Button variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar às Configurações
+            </Button>
+          </Link>
         </div>
       </div>
     );

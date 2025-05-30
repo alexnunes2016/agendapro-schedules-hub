@@ -11,9 +11,14 @@ export const useOrganizationUsers = () => {
   const { toast } = useToast();
 
   const fetchUsers = async () => {
-    if (!profile?.organization_id) return;
+    if (!profile?.organization_id) {
+      console.log('No organization_id found in profile');
+      setLoading(false);
+      return;
+    }
 
     try {
+      console.log('Fetching users for organization:', profile.organization_id);
       const { data, error } = await supabase
         .from('organization_users')
         .select(`
@@ -26,7 +31,12 @@ export const useOrganizationUsers = () => {
         `)
         .eq('organization_id', profile.organization_id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching users:', error);
+        throw error;
+      }
+      
+      console.log('Fetched users:', data);
       setUsers(data || []);
     } catch (error) {
       console.error('Error fetching organization users:', error);
@@ -41,16 +51,25 @@ export const useOrganizationUsers = () => {
   };
 
   const canCreateUser = async () => {
-    if (!profile?.organization_id) return false;
+    if (!profile?.organization_id) {
+      console.log('No organization_id for plan check');
+      return false;
+    }
 
     try {
+      console.log('Checking plan limits for:', profile.organization_id, profile.plan);
       const { data, error } = await supabase.rpc('check_plan_limits', {
         p_organization_id: profile.organization_id,
         p_plan: profile.plan || 'free',
         p_check_type: 'users'
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error checking plan limits:', error);
+        throw error;
+      }
+      
+      console.log('Can create user:', data);
       return data;
     } catch (error) {
       console.error('Error checking user limits:', error);
@@ -59,7 +78,17 @@ export const useOrganizationUsers = () => {
   };
 
   const createUser = async (userData: { name: string; email: string; role?: string }) => {
-    if (!profile?.organization_id) return false;
+    console.log('Creating user with data:', userData);
+    
+    if (!profile?.organization_id) {
+      console.error('No organization_id found');
+      toast({
+        title: "Erro",
+        description: "ID da organização não encontrado",
+        variant: "destructive",
+      });
+      return false;
+    }
 
     const canCreate = await canCreateUser();
     if (!canCreate) {
@@ -73,6 +102,7 @@ export const useOrganizationUsers = () => {
 
     try {
       // Criar convite na tabela user_invitations
+      console.log('Inserting invitation for:', userData.email);
       const { data, error } = await supabase
         .from('user_invitations')
         .insert({
@@ -86,8 +116,13 @@ export const useOrganizationUsers = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating invitation:', error);
+        throw error;
+      }
 
+      console.log('Invitation created successfully:', data);
+      
       toast({
         title: "Convite Enviado",
         description: `Convite enviado para ${userData.name}. Um email de convite foi enviado para ${userData.email}.`,
@@ -97,18 +132,28 @@ export const useOrganizationUsers = () => {
       return true;
     } catch (error) {
       console.error('Error creating user invitation:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao enviar convite para usuário",
-        variant: "destructive",
-      });
+      
+      // Verificar se é erro de email duplicado
+      if (error.message?.includes('duplicate') || error.code === '23505') {
+        toast({
+          title: "Erro",
+          description: "Este email já foi convidado ou já faz parte da organização",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: "Erro ao enviar convite para usuário. Tente novamente.",
+          variant: "destructive",
+        });
+      }
       return false;
     }
   };
 
   useEffect(() => {
     fetchUsers();
-  }, [profile]);
+  }, [profile?.organization_id]);
 
   return {
     users,
