@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import WhatsAppFloat from "@/components/WhatsAppFloat";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -19,6 +20,7 @@ import Upgrade from "./pages/Upgrade";
 import BookingPublic from "./pages/BookingPublic";
 import AdminDashboard from "./pages/AdminDashboard";
 import Demo from "./pages/Demo";
+import Features from "./pages/Features";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,9 +47,11 @@ const App = () => (
             <Route path="/booking/:userId" element={<BookingPublic />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/demo" element={<Demo />} />
+            <Route path="/features" element={<Features />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <WhatsAppFloat />
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>

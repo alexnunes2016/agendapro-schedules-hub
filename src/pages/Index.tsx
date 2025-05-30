@@ -1,30 +1,89 @@
-
-import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Brain, MessageSquare, Calendar, BarChart3 } from "lucide-react";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import Features from "@/components/Features";
 import Pricing from "@/components/Pricing";
+import Testimonials from "@/components/Testimonials";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 
 const Index = () => {
-  const [darkMode, setDarkMode] = useState(false);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    document.documentElement.classList.toggle('dark');
-  };
-
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
-      <div className="bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 min-h-screen">
-        <Header darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-        <Hero />
-        <Features />
-        <Pricing />
-        <CTA />
-        <Footer />
-      </div>
+    <div className="min-h-screen bg-white">
+      <Header />
+      
+      {/* Enhanced Hero with AI highlight */}
+      <section className="relative py-20 lg:py-32 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
+        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+        <div className="container mx-auto px-6 relative">
+          <div className="text-center max-w-4xl mx-auto">
+            <Badge className="mb-6 bg-blue-100 text-blue-800 hover:bg-blue-200 text-sm px-4 py-2">
+              <Brain className="h-4 w-4 mr-2" />
+              Primeira Plataforma com IA para Agendamentos do Brasil
+            </Badge>
+            
+            <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+              Revolucione Seus
+              <span className="text-blue-600 block">Agendamentos</span>
+              <span className="text-gray-700">com Inteligência Artificial</span>
+            </h1>
+            
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+              Nossa IA automatiza confirmações via WhatsApp, otimiza sua agenda, reduz faltas 
+              e aumenta sua receita. Perfeito para clínicas, salões, consultórios e muito mais.
+            </p>
+
+            {/* AI Features Highlight */}
+            <div className="grid md:grid-cols-3 gap-6 mb-10 max-w-3xl mx-auto">
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-blue-100">
+                <MessageSquare className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                <h3 className="font-semibold text-gray-900 mb-1">WhatsApp Automático</h3>
+                <p className="text-sm text-gray-600">Confirmações e lembretes inteligentes</p>
+              </div>
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-blue-100">
+                <Calendar className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                <h3 className="font-semibold text-gray-900 mb-1">Agenda Inteligente</h3>
+                <p className="text-sm text-gray-600">IA otimiza horários automaticamente</p>
+              </div>
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-blue-100">
+                <BarChart3 className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                <h3 className="font-semibold text-gray-900 mb-1">Analytics Avançado</h3>
+                <p className="text-sm text-gray-600">Insights para crescer seu negócio</p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+              <Link to="/register">
+                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-4">
+                  Teste Grátis por 14 Dias
+                </Button>
+              </Link>
+              <Link to="/features">
+                <Button size="lg" variant="outline" className="text-lg px-8 py-4">
+                  Ver Funcionalidades
+                </Button>
+              </Link>
+            </div>
+
+            <div className="flex items-center justify-center space-x-6 text-sm text-gray-500">
+              <span>✅ Sem cartão de crédito</span>
+              <span>✅ Configuração em 5 minutos</span>
+              <span>✅ Suporte brasileiro</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Rest of the sections */}
+      <Hero />
+      <Features />
+      <Testimonials />
+      <Pricing />
+      <CTA />
+      <Footer />
     </div>
   );
 };

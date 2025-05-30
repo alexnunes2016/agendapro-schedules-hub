@@ -68,6 +68,7 @@ export const useUserManagement = () => {
       const { error } = await supabase
         .from('profiles')
         .update({ 
+          is_active: newStatus,
           updated_at: new Date().toISOString() 
         })
         .eq('id', userId);
@@ -76,7 +77,7 @@ export const useUserManagement = () => {
 
       toast({
         title: "Sucesso",
-        description: `Usuário ${userName} ${newStatus ? 'desbloqueado' : 'bloqueado'} com sucesso`,
+        description: `Usuário ${userName} ${newStatus ? 'ativado' : 'desativado'} com sucesso`,
       });
       
       await fetchUsers();
@@ -101,6 +102,94 @@ export const useUserManagement = () => {
       toast({
         title: "Erro",
         description: "Erro ao enviar notificação",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resetPassword = async (userId: string, userName: string) => {
+    if (!confirm(`Tem certeza que deseja resetar a senha do usuário ${userName}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase.rpc('admin_reset_user_password', {
+        p_user_id: userId,
+        p_new_password: 'temp123456'
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `Senha do usuário ${userName} foi resetada para: temp123456`,
+      });
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao resetar senha do usuário",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleEmailConfirmation = async (userId: string, userName: string, currentStatus: boolean) => {
+    try {
+      const newStatus = !currentStatus;
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          email_confirmed: newStatus,
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `Email do usuário ${userName} ${newStatus ? 'confirmado' : 'desconfirmado'} com sucesso`,
+      });
+      
+      await fetchUsers();
+    } catch (error) {
+      console.error('Error toggling email confirmation:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao alterar confirmação do email",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const editPlanExpiration = async (userId: string, userName: string) => {
+    const newDate = prompt(`Digite a nova data de expiração para ${userName} (YYYY-MM-DD):`);
+    if (!newDate) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          plan_expires_at: new Date(newDate).toISOString(),
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `Data de expiração do plano de ${userName} atualizada`,
+      });
+      
+      await fetchUsers();
+    } catch (error) {
+      console.error('Error updating plan expiration:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar data de expiração",
         variant: "destructive",
       });
     }
@@ -154,6 +243,9 @@ export const useUserManagement = () => {
     updateUserPlan,
     toggleUserStatus,
     sendNotification,
+    resetPassword,
+    toggleEmailConfirmation,
+    editPlanExpiration,
     deleteUser,
   };
 };

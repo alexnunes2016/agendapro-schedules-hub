@@ -62,14 +62,78 @@ export type Database = {
           },
         ]
       }
+      organization_calendars: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          organization_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          organization_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          organization_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      organization_users: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          organization_id: string
+          role: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id: string
+          role?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           clinic_name: string | null
           created_at: string | null
           email: string
+          email_confirmed: boolean | null
           id: string
+          is_active: boolean | null
           name: string
+          organization_id: string | null
           plan: string | null
+          plan_expires_at: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           service_type: string | null
           updated_at: string | null
@@ -78,9 +142,13 @@ export type Database = {
           clinic_name?: string | null
           created_at?: string | null
           email: string
+          email_confirmed?: boolean | null
           id: string
+          is_active?: boolean | null
           name: string
+          organization_id?: string | null
           plan?: string | null
+          plan_expires_at?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           service_type?: string | null
           updated_at?: string | null
@@ -89,9 +157,13 @@ export type Database = {
           clinic_name?: string | null
           created_at?: string | null
           email?: string
+          email_confirmed?: boolean | null
           id?: string
+          is_active?: boolean | null
           name?: string
+          organization_id?: string | null
           plan?: string | null
+          plan_expires_at?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           service_type?: string | null
           updated_at?: string | null
@@ -196,6 +268,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_reset_user_password: {
+        Args: { p_user_id: string; p_new_password: string }
+        Returns: boolean
+      }
+      check_plan_limits: {
+        Args: {
+          p_organization_id: string
+          p_plan: string
+          p_check_type: string
+        }
+        Returns: boolean
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean

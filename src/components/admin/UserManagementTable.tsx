@@ -27,6 +27,9 @@ const UserManagementTable = () => {
     updateUserPlan,
     toggleUserStatus,
     sendNotification,
+    resetPassword,
+    toggleEmailConfirmation,
+    editPlanExpiration,
     deleteUser,
   } = useUserManagement();
 
@@ -72,6 +75,8 @@ const UserManagementTable = () => {
                 <TableHead>Plano</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Email Confirmado</TableHead>
+                <TableHead>Expiração do Plano</TableHead>
                 <TableHead>Criado em</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -102,13 +107,27 @@ const UserManagementTable = () => {
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       <Switch
-                        checked={true}
-                        onCheckedChange={(checked) => toggleUserStatus(user.id, !checked, user.name)}
+                        checked={user.is_active}
+                        onCheckedChange={(checked) => toggleUserStatus(user.id, user.is_active, user.name)}
                       />
-                      <span className="text-sm text-gray-600">
-                        Ativo
+                      <span className={`text-sm ${user.is_active ? 'text-green-600' : 'text-red-600'}`}>
+                        {user.is_active ? 'Ativo' : 'Inativo'}
                       </span>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={user.email_confirmed ? 'default' : 'secondary'}>
+                      {user.email_confirmed ? 'Confirmado' : 'Pendente'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {user.plan_expires_at ? (
+                      <span className="text-sm">
+                        {new Date(user.plan_expires_at).toLocaleDateString('pt-BR')}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-gray-400">Sem expiração</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {new Date(user.created_at).toLocaleDateString('pt-BR')}
@@ -117,9 +136,14 @@ const UserManagementTable = () => {
                     <UserActions
                       userId={user.id}
                       userName={user.name}
+                      userEmail={user.email}
+                      emailConfirmed={user.email_confirmed}
                       onSendNotification={sendNotification}
                       onToggleStatus={toggleUserStatus}
                       onDeleteUser={(userId, userName) => deleteUser(userId, userName, isSuperAdmin)}
+                      onResetPassword={resetPassword}
+                      onToggleEmailConfirmation={toggleEmailConfirmation}
+                      onEditPlanExpiration={editPlanExpiration}
                       isSuperAdmin={isSuperAdmin}
                     />
                   </TableCell>
