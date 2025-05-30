@@ -1,16 +1,21 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BarChart3 } from "lucide-react";
+import { Users, BarChart3, FileText } from "lucide-react";
 import { UserManagementTable } from "@/components/admin/UserManagementTable";
+import AdminMedicalRecordsTable from "@/components/admin/AdminMedicalRecordsTable";
 
 const AdminTabs = () => {
   return (
     <Tabs defaultValue="users" className="space-y-6">
-      <TabsList className="grid w-full md:w-auto grid-cols-2">
+      <TabsList className="grid w-full md:w-auto grid-cols-3">
         <TabsTrigger value="users" className="flex items-center space-x-2">
           <Users className="h-4 w-4" />
           <span>Usuários</span>
+        </TabsTrigger>
+        <TabsTrigger value="medical-records" className="flex items-center space-x-2">
+          <FileText className="h-4 w-4" />
+          <span>Prontuários</span>
         </TabsTrigger>
         <TabsTrigger value="reports" className="flex items-center space-x-2">
           <BarChart3 className="h-4 w-4" />
@@ -20,6 +25,10 @@ const AdminTabs = () => {
 
       <TabsContent value="users">
         <UserManagementTable />
+      </TabsContent>
+
+      <TabsContent value="medical-records">
+        <AdminMedicalRecordsTable />
       </TabsContent>
 
       <TabsContent value="reports">
