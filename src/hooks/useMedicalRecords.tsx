@@ -20,7 +20,7 @@ interface MedicalRecord {
 export const useMedicalRecords = () => {
   const [records, setRecords] = useState<MedicalRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
   const fetchRecords = async () => {
