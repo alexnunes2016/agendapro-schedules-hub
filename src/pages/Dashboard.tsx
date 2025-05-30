@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
+import RevenueCard from "@/components/RevenueCard";
 
 const Dashboard = () => {
   const { user, profile, signOut, loading: authLoading } = useAuth();
@@ -208,7 +209,7 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="border-l-4 border-l-blue-600">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -236,6 +237,8 @@ const Dashboard = () => {
               </p>
             </CardContent>
           </Card>
+
+          <RevenueCard />
 
           <Card className="border-l-4 border-l-purple-600">
             <CardHeader className="pb-2">
