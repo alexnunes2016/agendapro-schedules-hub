@@ -1,7 +1,8 @@
+
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Brain, MessageSquare, Calendar, BarChart3 } from "lucide-react";
+import { MessageSquare, Calendar, BarChart3 } from "lucide-react";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import Features from "@/components/Features";
@@ -15,28 +16,27 @@ const Index = () => {
     <div className="min-h-screen bg-white">
       <Header />
       
-      {/* Enhanced Hero with AI highlight */}
+      {/* Enhanced Hero */}
       <section className="relative py-20 lg:py-32 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
         <div className="container mx-auto px-6 relative">
           <div className="text-center max-w-4xl mx-auto">
             <Badge className="mb-6 bg-blue-100 text-blue-800 hover:bg-blue-200 text-sm px-4 py-2">
-              <Brain className="h-4 w-4 mr-2" />
-              Primeira Plataforma com IA para Agendamentos do Brasil
+              Sistema de Agendamentos Profissional
             </Badge>
             
             <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
               Revolucione Seus
               <span className="text-blue-600 block">Agendamentos</span>
-              <span className="text-gray-700">com Inteligência Artificial</span>
+              <span className="text-gray-700">com Tecnologia Avançada</span>
             </h1>
             
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Nossa IA automatiza confirmações via WhatsApp, otimiza sua agenda, reduz faltas 
+              Nossa plataforma automatiza confirmações via WhatsApp, otimiza sua agenda, reduz faltas 
               e aumenta sua receita. Perfeito para clínicas, salões, consultórios e muito mais.
             </p>
 
-            {/* AI Features Highlight */}
+            {/* Features Highlight */}
             <div className="grid md:grid-cols-3 gap-6 mb-10 max-w-3xl mx-auto">
               <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-blue-100">
                 <MessageSquare className="h-8 w-8 text-blue-600 mx-auto mb-2" />
@@ -46,7 +46,7 @@ const Index = () => {
               <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-blue-100">
                 <Calendar className="h-8 w-8 text-blue-600 mx-auto mb-2" />
                 <h3 className="font-semibold text-gray-900 mb-1">Agenda Inteligente</h3>
-                <p className="text-sm text-gray-600">IA otimiza horários automaticamente</p>
+                <p className="text-sm text-gray-600">Sistema otimiza horários automaticamente</p>
               </div>
               <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-blue-100">
                 <BarChart3 className="h-8 w-8 text-blue-600 mx-auto mb-2" />

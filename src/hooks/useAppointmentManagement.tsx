@@ -36,7 +36,7 @@ export const useAppointmentManagement = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await (supabase as any)
+      let query = supabase
         .from('appointments')
         .select(`
           *,
@@ -46,9 +46,15 @@ export const useAppointmentManagement = () => {
             price
           )
         `)
-        .eq('user_id', user.id)
         .order('appointment_date', { ascending: true })
         .order('appointment_time', { ascending: true });
+
+      // Se não for admin ou super admin, filtrar apenas pelos agendamentos do usuário
+      if (!isAdmin && !isSuperAdmin) {
+        query = query.eq('user_id', user.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setAppointments(data || []);
@@ -68,11 +74,17 @@ export const useAppointmentManagement = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await (supabase as any)
+      let query = supabase
         .from('services')
         .select('*')
-        .eq('user_id', user.id)
         .eq('is_active', true);
+
+      // Se não for admin ou super admin, filtrar apenas pelos serviços do usuário
+      if (!isAdmin && !isSuperAdmin) {
+        query = query.eq('user_id', user.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setServices(data || []);
@@ -83,11 +95,17 @@ export const useAppointmentManagement = () => {
 
   const updateAppointmentStatus = async (appointmentId: string, status: string) => {
     try {
-      const { error } = await (supabase as any)
+      let query = supabase
         .from('appointments')
         .update({ status })
-        .eq('id', appointmentId)
-        .eq('user_id', user?.id);
+        .eq('id', appointmentId);
+
+      // Se não for admin ou super admin, adicionar filtro do usuário
+      if (!isAdmin && !isSuperAdmin) {
+        query = query.eq('user_id', user?.id);
+      }
+
+      const { error } = await query;
 
       if (error) throw error;
 
@@ -113,11 +131,17 @@ export const useAppointmentManagement = () => {
     }
 
     try {
-      const { error } = await (supabase as any)
+      let query = supabase
         .from('appointments')
         .delete()
-        .eq('id', appointmentId)
-        .eq('user_id', user?.id);
+        .eq('id', appointmentId);
+
+      // Se não for admin ou super admin, adicionar filtro do usuário
+      if (!isAdmin && !isSuperAdmin) {
+        query = query.eq('user_id', user?.id);
+      }
+
+      const { error } = await query;
 
       if (error) throw error;
 
