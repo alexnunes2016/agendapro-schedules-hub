@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Download, FileText, Users, Calendar, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import jsPDF from "jspdf";
+import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
 interface SystemStatsResponse {
