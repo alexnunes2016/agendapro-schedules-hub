@@ -32,11 +32,10 @@ export const useCalendarPermissions = (calendarId?: string) => {
       setLoading(true);
       console.log('Fetching permissions for calendar:', calendarId);
       
-      // Usando any para contornar limitações temporárias do tipo
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('calendar_permissions')
         .select('*')
-        .eq('calendar_id', calendarId) as any;
+        .eq('calendar_id', calendarId);
 
       if (error) {
         console.error('Error fetching permissions:', error);
@@ -63,13 +62,12 @@ export const useCalendarPermissions = (calendarId?: string) => {
     try {
       console.log('Granting permission:', data);
       
-      // Usando any para contornar limitações temporárias do tipo
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('calendar_permissions')
         .insert({
           ...data,
           granted_by: user.id,
-        }) as any;
+        });
 
       if (error) {
         console.error('Error granting permission:', error);
@@ -100,11 +98,10 @@ export const useCalendarPermissions = (calendarId?: string) => {
     try {
       console.log('Revoking permission:', id);
       
-      // Usando any para contornar limitações temporárias do tipo
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('calendar_permissions')
         .delete()
-        .eq('id', id) as any;
+        .eq('id', id);
 
       if (error) {
         console.error('Error revoking permission:', error);

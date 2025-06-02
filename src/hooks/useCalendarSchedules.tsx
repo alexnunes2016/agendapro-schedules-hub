@@ -35,12 +35,11 @@ export const useCalendarSchedules = (calendarId?: string) => {
       setLoading(true);
       console.log('Fetching schedules for calendar:', calendarId);
       
-      // Usando any para contornar limitações temporárias do tipo
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('calendar_schedules')
         .select('*')
         .eq('calendar_id', calendarId)
-        .order('day_of_week', { ascending: true }) as any;
+        .order('day_of_week', { ascending: true });
 
       if (error) {
         console.error('Error fetching schedules:', error);
@@ -67,10 +66,9 @@ export const useCalendarSchedules = (calendarId?: string) => {
     try {
       console.log('Creating schedule:', data);
       
-      // Usando any para contornar limitações temporárias do tipo
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('calendar_schedules')
-        .insert(data) as any;
+        .insert(data);
 
       if (error) {
         console.error('Error creating schedule:', error);
@@ -101,14 +99,13 @@ export const useCalendarSchedules = (calendarId?: string) => {
     try {
       console.log('Updating schedule:', id, data);
       
-      // Usando any para contornar limitações temporárias do tipo
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('calendar_schedules')
         .update({
           ...data,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', id) as any;
+        .eq('id', id);
 
       if (error) {
         console.error('Error updating schedule:', error);
@@ -139,11 +136,10 @@ export const useCalendarSchedules = (calendarId?: string) => {
     try {
       console.log('Deleting schedule:', id);
       
-      // Usando any para contornar limitações temporárias do tipo
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('calendar_schedules')
         .delete()
-        .eq('id', id) as any;
+        .eq('id', id);
 
       if (error) {
         console.error('Error deleting schedule:', error);

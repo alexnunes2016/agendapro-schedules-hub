@@ -42,12 +42,11 @@ export const useProfessionals = () => {
       setLoading(true);
       console.log('Fetching professionals for user:', user.id);
       
-      // Usando any para contornar limitações temporárias do tipo
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('professionals')
         .select('*')
         .eq('created_by', user.id)
-        .order('created_at', { ascending: false }) as any;
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching professionals:', error);
@@ -74,13 +73,12 @@ export const useProfessionals = () => {
     try {
       console.log('Creating professional:', data);
       
-      // Usando any para contornar limitações temporárias do tipo
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('professionals')
         .insert({
           ...data,
           created_by: user.id,
-        }) as any;
+        });
 
       if (error) {
         console.error('Error creating professional:', error);
@@ -111,7 +109,7 @@ export const useProfessionals = () => {
     try {
       console.log('Updating professional:', id, data);
       
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('professionals')
         .update({
           ...data,
@@ -149,7 +147,7 @@ export const useProfessionals = () => {
     try {
       console.log('Toggling professional status:', id, isActive);
       
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('professionals')
         .update({
           is_active: !isActive,
@@ -191,7 +189,7 @@ export const useProfessionals = () => {
     try {
       console.log('Deleting professional:', id);
       
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('professionals')
         .delete()
         .eq('id', id)
