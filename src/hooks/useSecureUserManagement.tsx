@@ -15,20 +15,15 @@ export const useSecureUserManagement = () => {
     try {
       if (!isSuperAdmin) return; // Only log for super admins
 
-      // For now, we'll log to system_settings until audit_logs table is available in types
       const { error } = await supabase
-        .from('system_settings')
+        .from('audit_logs')
         .insert({
-          setting_key: 'audit_log',
-          setting_value: {
-            action,
-            table_name: tableName,
-            record_id: recordId,
-            old_values: oldValues || null,
-            new_values: newValues || null,
-            timestamp: new Date().toISOString(),
-            user_agent: navigator.userAgent
-          }
+          action,
+          table_name: tableName,
+          record_id: recordId,
+          old_values: oldValues || null,
+          new_values: newValues || null,
+          user_agent: navigator.userAgent
         });
 
       if (error) {
@@ -52,10 +47,9 @@ export const useSecureUserManagement = () => {
     try {
       setLoading(true);
 
-      // Use the existing admin_reset_user_password function with a temporary password
-      const { data, error } = await supabase.rpc('admin_reset_user_password', {
-        p_user_id: userId,
-        p_new_password: 'temp123456' // Temporary password - should be changed on first login
+      // Use the new secure function
+      const { data, error } = await supabase.rpc('secure_admin_reset_user_password', {
+        p_user_id: userId
       });
 
       if (error) {
@@ -66,7 +60,7 @@ export const useSecureUserManagement = () => {
 
       toast({
         title: "Senha Resetada",
-        description: `Senha do usuário ${userName} foi resetada para: temp123456`,
+        description: `Solicitação de reset de senha foi criada para ${userName}. Verifique as configurações do sistema para a senha temporária.`,
       });
 
     } catch (error: any) {

@@ -23,19 +23,32 @@ export const useRoleCheck = () => {
       try {
         console.log('Checking user roles for:', user.id);
 
-        // Check if user is super admin via profile
-        const isSuperAdmin = profile?.email === 'suporte@judahtech.com.br' && profile?.role === 'admin';
-        
-        // Check if user is regular admin
-        const isAdmin = profile?.role === 'admin';
+        // Use the new user_roles table with the security definer functions
+        const { data: userRoles, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
 
-        // For now, we'll use the profile-based checks until the database types are updated
-        // TODO: Replace with proper user_roles table check when types are regenerated
-        setHasRole({
-          super_admin: isSuperAdmin || false,
-          admin: isAdmin || false,
-          user: true
-        });
+        if (error) {
+          console.error('Error fetching user roles:', error);
+          // Fallback to profile-based checks for backward compatibility
+          const isSuperAdmin = profile?.email === 'suporte@judahtech.com.br' && profile?.role === 'admin';
+          const isAdmin = profile?.role === 'admin';
+          
+          setHasRole({
+            super_admin: isSuperAdmin || false,
+            admin: isAdmin || false,
+            user: true
+          });
+        } else {
+          const roles = userRoles?.map(r => r.role) || [];
+          
+          setHasRole({
+            super_admin: roles.includes('super_admin'),
+            admin: roles.includes('admin') || roles.includes('super_admin'),
+            user: roles.includes('user') || roles.length > 0 || true
+          });
+        }
 
         setLoading(false);
       } catch (error) {
