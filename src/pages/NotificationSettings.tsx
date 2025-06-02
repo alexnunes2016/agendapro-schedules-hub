@@ -9,18 +9,19 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import WhatsAppSettings from "@/components/WhatsAppSettings";
 
 const NotificationSettings = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [settings, setSettings] = useState({
     email_enabled: true,
-    whatsapp_enabled: false,
     appointment_reminders: true,
     appointment_confirmations: true,
     new_appointments: true,
     cancellations: true,
     reminder_hours: 24,
-    whatsapp_token: "",
     email_templates: {
       reminder: "Olá {nome}, você tem um agendamento amanhã às {hora}.",
       confirmation: "Seu agendamento foi confirmado para {data} às {hora}.",
@@ -29,7 +30,6 @@ const NotificationSettings = () => {
   });
 
   const handleSave = () => {
-    // Em produção, salvaria no banco
     toast({
       title: "Configurações Salvas",
       description: "As configurações de notificação foram atualizadas com sucesso.",
@@ -101,31 +101,6 @@ const NotificationSettings = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="whatsapp-enabled">Notificações por WhatsApp</Label>
-                  <p className="text-sm text-gray-600">Enviar notificações via WhatsApp</p>
-                </div>
-                <Switch
-                  id="whatsapp-enabled"
-                  checked={settings.whatsapp_enabled}
-                  onCheckedChange={(checked) => updateSetting('whatsapp_enabled', checked)}
-                />
-              </div>
-
-              {settings.whatsapp_enabled && (
-                <div>
-                  <Label htmlFor="whatsapp-token">Token do WhatsApp</Label>
-                  <Input
-                    id="whatsapp-token"
-                    type="password"
-                    value={settings.whatsapp_token}
-                    onChange={(e) => updateSetting('whatsapp_token', e.target.value)}
-                    placeholder="Insira seu token do WhatsApp"
-                  />
-                </div>
-              )}
-
               <div>
                 <Label htmlFor="reminder-hours">Lembrete (horas antes)</Label>
                 <Input
@@ -140,61 +115,64 @@ const NotificationSettings = () => {
             </CardContent>
           </Card>
 
-          {/* Tipos de Notificação */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Bell className="h-5 w-5" />
-                <span>Tipos de Notificação</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Lembretes de Agendamento</Label>
-                  <p className="text-sm text-gray-600">Lembrar clientes sobre agendamentos</p>
-                </div>
-                <Switch
-                  checked={settings.appointment_reminders}
-                  onCheckedChange={(checked) => updateSetting('appointment_reminders', checked)}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Confirmações</Label>
-                  <p className="text-sm text-gray-600">Confirmar agendamentos marcados</p>
-                </div>
-                <Switch
-                  checked={settings.appointment_confirmations}
-                  onCheckedChange={(checked) => updateSetting('appointment_confirmations', checked)}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Novos Agendamentos</Label>
-                  <p className="text-sm text-gray-600">Notificar sobre novos agendamentos</p>
-                </div>
-                <Switch
-                  checked={settings.new_appointments}
-                  onCheckedChange={(checked) => updateSetting('new_appointments', checked)}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Cancelamentos</Label>
-                  <p className="text-sm text-gray-600">Notificar sobre cancelamentos</p>
-                </div>
-                <Switch
-                  checked={settings.cancellations}
-                  onCheckedChange={(checked) => updateSetting('cancellations', checked)}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          {/* Configurações WhatsApp */}
+          <WhatsAppSettings userId={user?.id} />
         </div>
+
+        {/* Configuração dos Tipos de Notificação */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Bell className="h-5 w-5" />
+              <span>Tipos de Notificação</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Lembretes de Agendamento</Label>
+                <p className="text-sm text-gray-600">Lembrar clientes sobre agendamentos</p>
+              </div>
+              <Switch
+                checked={settings.appointment_reminders}
+                onCheckedChange={(checked) => updateSetting('appointment_reminders', checked)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Confirmações</Label>
+                <p className="text-sm text-gray-600">Confirmar agendamentos marcados</p>
+              </div>
+              <Switch
+                checked={settings.appointment_confirmations}
+                onCheckedChange={(checked) => updateSetting('appointment_confirmations', checked)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Novos Agendamentos</Label>
+                <p className="text-sm text-gray-600">Notificar sobre novos agendamentos</p>
+              </div>
+              <Switch
+                checked={settings.new_appointments}
+                onCheckedChange={(checked) => updateSetting('new_appointments', checked)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Cancelamentos</Label>
+                <p className="text-sm text-gray-600">Notificar sobre cancelamentos</p>
+              </div>
+              <Switch
+                checked={settings.cancellations}
+                onCheckedChange={(checked) => updateSetting('cancellations', checked)}
+              />
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Templates de Mensagem */}
         <Card>
