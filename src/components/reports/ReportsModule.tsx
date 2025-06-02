@@ -21,42 +21,44 @@ const ReportsModule = () => {
   const isAdvancedPlan = profile?.plan === 'profissional' || profile?.plan === 'premium';
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Relatórios</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Relatórios</h1>
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">
             {isBasicPlan 
               ? "Relatórios simples para acompanhar seus atendimentos"
               : "Relatórios completos com análises avançadas"
             }
           </p>
         </div>
-        <div className="flex space-x-2">
-          <Button variant="outline">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" className="w-full sm:w-auto">
             <Download className="h-4 w-4 mr-2" />
-            Exportar PDF
+            <span className="hidden sm:inline">Exportar PDF</span>
+            <span className="sm:hidden">PDF</span>
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" className="w-full sm:w-auto">
             <Download className="h-4 w-4 mr-2" />
-            Exportar Excel
+            <span className="hidden sm:inline">Exportar Excel</span>
+            <span className="sm:hidden">Excel</span>
           </Button>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
+          <CardTitle className="flex items-center text-lg sm:text-xl">
             <BarChart3 className="h-5 w-5 mr-2" />
             Filtros de Relatório
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="reportType">Tipo de Relatório</Label>
+              <Label htmlFor="reportType" className="text-sm font-medium">Tipo de Relatório</Label>
               <Select value={reportType} onValueChange={setReportType}>
-                <SelectTrigger>
+                <SelectTrigger className="mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -74,9 +76,9 @@ const ReportsModule = () => {
             </div>
 
             <div>
-              <Label htmlFor="dateRange">Período</Label>
+              <Label htmlFor="dateRange" className="text-sm font-medium">Período</Label>
               <Select value={dateRange} onValueChange={setDateRange}>
-                <SelectTrigger>
+                <SelectTrigger className="mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -89,24 +91,26 @@ const ReportsModule = () => {
             </div>
 
             {dateRange === "custom" && (
-              <>
+              <div className="col-span-1 sm:col-span-2 lg:col-span-1 space-y-4">
                 <div>
-                  <Label htmlFor="startDate">Data Inicial</Label>
+                  <Label htmlFor="startDate" className="text-sm font-medium">Data Inicial</Label>
                   <Input
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="endDate">Data Final</Label>
+                  <Label htmlFor="endDate" className="text-sm font-medium">Data Final</Label>
                   <Input
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
+                    className="mt-1"
                   />
                 </div>
-              </>
+              </div>
             )}
           </div>
         </CardContent>

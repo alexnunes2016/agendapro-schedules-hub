@@ -13,49 +13,53 @@ const DashboardQuickActions = ({ profile }: DashboardQuickActionsProps) => {
            ['basico', 'profissional', 'premium'].includes(profile?.plan || '');
   };
 
+  const actions = [
+    {
+      to: "/appointments",
+      icon: Calendar,
+      title: "Agendamentos",
+      description: "Visualizar e gerenciar agendamentos",
+      color: "text-blue-600"
+    },
+    {
+      to: "/clients",
+      icon: Users,
+      title: "Clientes",
+      description: "Lista de clientes e histórico",
+      color: "text-green-600"
+    },
+    {
+      to: "/services",
+      icon: Clock,
+      title: "Serviços",
+      description: "Configurar serviços e horários",
+      color: "text-purple-600"
+    }
+  ];
+
+  if (canAccessMedicalRecords()) {
+    actions.push({
+      to: "/medical-records",
+      icon: FileText,
+      title: "Prontuários",
+      description: "Prontuários médicos digitais",
+      color: "text-red-600"
+    });
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <Link to="/appointments">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-          <CardHeader className="text-center">
-            <Calendar className="h-12 w-12 text-blue-600 mx-auto mb-2" />
-            <CardTitle className="text-lg">Agendamentos</CardTitle>
-            <CardDescription>Visualizar e gerenciar agendamentos</CardDescription>
-          </CardHeader>
-        </Card>
-      </Link>
-
-      <Link to="/clients">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-          <CardHeader className="text-center">
-            <Users className="h-12 w-12 text-green-600 mx-auto mb-2" />
-            <CardTitle className="text-lg">Clientes</CardTitle>
-            <CardDescription>Lista de clientes e histórico</CardDescription>
-          </CardHeader>
-        </Card>
-      </Link>
-
-      <Link to="/services">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-          <CardHeader className="text-center">
-            <Clock className="h-12 w-12 text-purple-600 mx-auto mb-2" />
-            <CardTitle className="text-lg">Serviços</CardTitle>
-            <CardDescription>Configurar serviços e horários</CardDescription>
-          </CardHeader>
-        </Card>
-      </Link>
-
-      {canAccessMedicalRecords() && (
-        <Link to="/medical-records">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader className="text-center">
-              <FileText className="h-12 w-12 text-red-600 mx-auto mb-2" />
-              <CardTitle className="text-lg">Prontuários</CardTitle>
-              <CardDescription>Prontuários médicos digitais</CardDescription>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8 px-4 sm:px-0">
+      {actions.map((action) => (
+        <Link key={action.to} to={action.to}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <CardHeader className="text-center p-4 sm:p-6">
+              <action.icon className={`h-10 w-10 sm:h-12 sm:w-12 ${action.color} mx-auto mb-2`} />
+              <CardTitle className="text-base sm:text-lg">{action.title}</CardTitle>
+              <CardDescription className="text-sm">{action.description}</CardDescription>
             </CardHeader>
           </Card>
         </Link>
-      )}
+      ))}
     </div>
   );
 };

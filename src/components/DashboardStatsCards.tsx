@@ -10,7 +10,7 @@ interface DashboardStatsCardsProps {
 
 const DashboardStatsCards = ({ profile }: DashboardStatsCardsProps) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8 px-4 sm:px-0">
       <AppointmentStatsCard 
         type="today"
         title="Agendamentos Hoje"
@@ -34,7 +34,7 @@ const DashboardStatsCards = ({ profile }: DashboardStatsCardsProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-gray-800 dark:text-white capitalize">{profile.plan}</div>
+          <div className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white capitalize">{profile.plan}</div>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {profile.plan === 'free' ? 'Plano gratuito' : 'Plano ativo'}
           </p>

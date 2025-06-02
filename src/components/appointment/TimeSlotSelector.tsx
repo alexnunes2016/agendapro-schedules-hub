@@ -18,7 +18,7 @@ export const TimeSlotSelector = ({
 }: TimeSlotSelectorProps) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="time">Horário</Label>
+      <Label htmlFor="time" className="text-sm font-medium">Horário</Label>
       {appointmentDate ? (
         <div>
           {availableSlots.length === 0 ? (
@@ -28,14 +28,14 @@ export const TimeSlotSelector = ({
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
               {availableSlots.map((slot) => (
                 <Button
                   key={slot}
                   type="button"
                   variant={appointmentTime === slot ? "default" : "outline"}
                   onClick={() => onTimeSelect(slot)}
-                  className="text-sm h-10"
+                  className="text-sm h-10 w-full"
                 >
                   {slot}
                 </Button>
@@ -50,6 +50,7 @@ export const TimeSlotSelector = ({
           value={appointmentTime}
           onChange={(e) => onTimeSelect(e.target.value)}
           required
+          className="w-full"
         />
       )}
     </div>
