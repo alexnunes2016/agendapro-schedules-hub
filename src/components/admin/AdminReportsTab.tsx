@@ -44,13 +44,52 @@ const AdminReportsTab = () => {
   const fetchSystemStats = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.rpc('get_system_statistics');
+
+      // Buscar todos os usuários
+      const { data: users, error: usersError } = await supabase
+        .from('profiles')
+        .select('*');
+
+      if (usersError) throw usersError;
+
+      // Calcular estatísticas
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
       
-      if (error) throw error;
-      
-      if (data && typeof data === 'object') {
-        setStats(data as unknown as SystemStats);
-      }
+      const total_users = users?.length || 0;
+      const active_users = users?.filter(u => u.is_active === true).length || 0;
+      const inactive_users = users?.filter(u => u.is_active === false).length || 0;
+      const new_users_this_month = users?.filter(u => {
+        const userDate = new Date(u.created_at);
+        return userDate.getMonth() === currentMonth && userDate.getFullYear() === currentYear;
+      }).length || 0;
+
+      // Calcular distribuição de planos
+      const plan_distribution = users?.reduce((acc, user) => {
+        const plan = user.plan || 'free';
+        acc[plan] = (acc[plan] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      // Calcular receita estimada
+      const planValues = { basico: 49.90, profissional: 129.90, premium: 299.90 };
+      const total_revenue_estimate = users?.reduce((total, user) => {
+        if (user.is_active && user.plan) {
+          return total + (planValues[user.plan as keyof typeof planValues] || 0);
+        }
+        return total;
+      }, 0) || 0;
+
+      setStats({
+        total_users,
+        active_users,
+        inactive_users,
+        new_users_this_month,
+        total_appointments: 0, // Não implementado ainda
+        appointments_this_month: 0, // Não implementado ainda
+        total_revenue_estimate,
+        plan_distribution
+      });
     } catch (error: any) {
       console.error('Error fetching system stats:', error);
       toast({
