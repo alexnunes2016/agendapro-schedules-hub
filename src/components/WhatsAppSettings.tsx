@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageSquare, Save, TestTube } from "lucide-react";
+import { MessageSquare, Save, CheckCircle } from "lucide-react";
 
 interface WhatsAppSettingsProps {
   userId?: string;
@@ -145,11 +144,13 @@ const WhatsAppSettings = ({ userId, isGlobal = false }: WhatsAppSettingsProps) =
 
     setTesting(true);
     try {
+      // Usar modo no-cors para evitar problemas de CORS
       const response = await fetch(settings.webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        mode: 'no-cors',
         body: JSON.stringify({
           phone: '5511999999999',
           message: '🧪 *Teste de Configuração*\n\nSeu webhook N8N está funcionando corretamente!\n\n_AgendoPro_',
@@ -157,23 +158,18 @@ const WhatsAppSettings = ({ userId, isGlobal = false }: WhatsAppSettingsProps) =
         }),
       });
 
-      if (response.ok) {
-        toast({
-          title: "Teste realizado",
-          description: "Webhook testado com sucesso! Verifique se a mensagem foi enviada.",
-        });
-      } else {
-        toast({
-          title: "Erro no teste",
-          description: "O webhook retornou um erro. Verifique a URL e configurações.",
-          variant: "destructive",
-        });
-      }
+      // Com no-cors, não conseguimos verificar o status da resposta
+      // Mas se chegou até aqui sem erro, significa que a requisição foi enviada
+      toast({
+        title: "Teste enviado",
+        description: "Requisição enviada para o webhook. Verifique se a mensagem foi recebida no N8N.",
+      });
+
     } catch (error) {
       console.error('Erro ao testar webhook:', error);
       toast({
         title: "Erro no teste",
-        description: "Não foi possível conectar com o webhook",
+        description: "Não foi possível conectar com o webhook. Verifique a URL.",
         variant: "destructive",
       });
     } finally {
@@ -239,7 +235,7 @@ const WhatsAppSettings = ({ userId, isGlobal = false }: WhatsAppSettingsProps) =
             variant="outline"
             className="border-green-600 text-green-600 hover:bg-green-50"
           >
-            <TestTube className="h-4 w-4 mr-2" />
+            <CheckCircle className="h-4 w-4 mr-2" />
             {testing ? "Testando..." : "Testar"}
           </Button>
         </div>
