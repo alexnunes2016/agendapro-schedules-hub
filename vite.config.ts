@@ -22,4 +22,12 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: ['jspdf', 'jspdf-autotable']
+  },
+  build: {
+    commonjsOptions: {
+      include: [/jspdf/, /node_modules/]
+    }
+  }
 }));
