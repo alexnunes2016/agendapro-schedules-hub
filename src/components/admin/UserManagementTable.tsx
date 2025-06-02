@@ -126,7 +126,7 @@ export const UserManagementTable = ({ filteredUsers }: UserManagementTableProps)
                     editPlanExpiration(userId, userName)
                   }
                   onDeleteUser={(userId, userName) =>
-                    deleteUser(userId, userName, isSuperAdmin)
+                    deleteUser(userId, userName)
                   }
                   onEditUser={handleEditUser}
                   isSuperAdmin={isSuperAdmin}

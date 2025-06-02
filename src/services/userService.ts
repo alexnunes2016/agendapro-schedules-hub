@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { AppError } from "@/utils/errorHandler";
 import { UserProfile } from "@/types/auth";
@@ -20,7 +19,14 @@ export const userService = {
         throw new AppError(`Falha ao carregar usuários: ${error.message}`, 'FETCH_USERS_ERROR');
       }
       
-      return data || [];
+      // Garantir que os dados retornados estão no formato correto
+      const users = (data || []).map(user => ({
+        ...user,
+        plan: user.plan as 'free' | 'basico' | 'profissional' | 'premium', // Cast para o tipo correto
+        role: user.role as 'user' | 'admin'
+      }));
+      
+      return users as UserProfile[];
     } catch (error: any) {
       console.error('Error in fetchUsers:', error);
       if (error instanceof AppError) {
@@ -206,7 +212,7 @@ export const userService = {
         throw new AppError(`Falha ao verificar permissões: ${error.message}`, 'PERMISSION_CHECK_ERROR');
       }
 
-      const userRole = data?.role;
+      const userRole = data?.role as 'user' | 'admin';
       const isActive = data?.is_active;
       const userEmail = data?.email;
       
@@ -219,9 +225,9 @@ export const userService = {
       
       // Hierarquia de permissões
       const hierarchy = { user: 1, admin: 2, super_admin: 3 };
-      const userLevel = isSuperAdmin ? 'super_admin' : userRole || 'user';
+      const effectiveLevel = isSuperAdmin ? 'super_admin' : userRole;
       
-      return hierarchy[userLevel as keyof typeof hierarchy] >= hierarchy[requiredLevel];
+      return hierarchy[effectiveLevel] >= hierarchy[requiredLevel];
     } catch (error: any) {
       console.error('Error in validateUserPermissions:', error);
       if (error instanceof AppError) {
