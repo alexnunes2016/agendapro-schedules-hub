@@ -18,6 +18,7 @@ import NotificationSettings from "./pages/NotificationSettings";
 import Features from "./pages/Features";
 import Pricing from "./pages/Pricing";
 import Demo from "./pages/Demo";
+import Reports from "./pages/Reports";
 
 // Lazy loaded pages
 import { 
@@ -45,8 +46,8 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/features" element={<Features />} />
-              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/funcionalidades" element={<Features />} />
+              <Route path="/precos" element={<Pricing />} />
               <Route path="/demonstração" element={<Demo />} />
               <Route path="/dashboard" element={<LazyDashboard />} />
               <Route path="/appointments" element={<LazyAppointments />} />
@@ -61,6 +62,7 @@ function App() {
               <Route path="/organization/users" element={<OrganizationUsers />} />
               <Route path="/settings/calendars" element={<CalendarSettings />} />
               <Route path="/settings/notifications" element={<NotificationSettings />} />
+              <Route path="/reports" element={<Reports />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

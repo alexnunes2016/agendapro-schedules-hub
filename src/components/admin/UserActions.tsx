@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Bell, Lock, Trash2, Key, CheckCircle, Calendar } from "lucide-react";
+import { Bell, Lock, Trash2, Key, CheckCircle, Calendar, Edit } from "lucide-react";
 
 interface UserActionsProps {
   user: {
@@ -16,6 +16,7 @@ interface UserActionsProps {
   onResetPassword: (userId: string, userName: string) => void;
   onToggleEmailConfirmation: (userId: string, userName: string, currentStatus: boolean) => void;
   onEditPlanExpiration: (userId: string, userName: string) => void;
+  onEditUser: (userId: string, userName: string) => void;
   isSuperAdmin: boolean;
 }
 
@@ -27,6 +28,7 @@ const UserActions = ({
   onResetPassword,
   onToggleEmailConfirmation,
   onEditPlanExpiration,
+  onEditUser,
   isSuperAdmin 
 }: UserActionsProps) => {
   return (
@@ -49,6 +51,14 @@ const UserActions = ({
       </Button>
       {isSuperAdmin && (
         <>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onEditUser(user.id, user.name)}
+            title="Editar nome e email"
+          >
+            <Edit className="h-4 w-4 text-blue-500" />
+          </Button>
           <Button
             variant="ghost"
             size="sm"
