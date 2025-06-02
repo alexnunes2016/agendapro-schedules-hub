@@ -107,13 +107,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = useCallback(async (email: string, password: string) => {
     console.log('Attempting sign in...');
+    
+    // Check rate limiting before attempting login
+    const canAttempt = await PermissionManager.checkRateLimit(email);
+    if (!canAttempt) {
+      return { error: { message: 'Muitas tentativas de login. Tente novamente em alguns minutos.' } };
+    }
+
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      
+      // Track the attempt
+      await PermissionManager.trackAuthAttempt(email, 'login', !error);
+      
       return { error };
     } catch (error) {
+      await PermissionManager.trackAuthAttempt(email, 'login', false);
       handleError(error, 'signIn');
       return { error };
     }
@@ -121,16 +133,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = useCallback(async (email: string, password: string, userData: any) => {
     console.log('Attempting sign up...');
+    
+    // Check rate limiting for signup
+    const canAttempt = await PermissionManager.checkRateLimit(email);
+    if (!canAttempt) {
+      return { error: { message: 'Muitas tentativas de cadastro. Tente novamente em alguns minutos.' } };
+    }
+
     try {
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: userData
+          data: userData,
+          emailRedirectTo: `${window.location.origin}/dashboard`
         }
       });
+      
+      // Track the attempt
+      await PermissionManager.trackAuthAttempt(email, 'signup', !error);
+      
       return { error };
     } catch (error) {
+      await PermissionManager.trackAuthAttempt(email, 'signup', false);
       handleError(error, 'signUp');
       return { error };
     }
@@ -147,8 +172,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [handleError]);
 
   const isAuthenticated = Boolean(user && profile);
-  const isSuperAdmin = PermissionManager.isSuperAdmin(profile);
-  const isAdmin = PermissionManager.isAdmin(profile);
+  const isSuperAdmin = PermissionManager.isSuperAdminSync(profile);
+  const isAdmin = PermissionManager.isAdminSync(profile);
 
   console.log('AuthProvider rendering with loading:', loading, 'user:', !!user);
 

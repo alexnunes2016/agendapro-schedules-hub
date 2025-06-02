@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import ForgotPasswordModal from "@/components/ForgotPasswordModal";
+import { InputValidator, useInputValidation } from "@/components/security/InputValidator";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -20,6 +21,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn, user, loading: authLoading } = useAuth();
+  const { errors, validateField } = useInputValidation();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -32,13 +34,36 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
 
+    // Validate inputs before submission
+    const emailValid = validateField('email', email, 'email');
+    const passwordValid = validateField('password', password, 'password');
+
+    if (!emailValid || !passwordValid) {
+      setIsLoading(false);
+      return;
+    }
+
+    // Sanitize inputs
+    const sanitizedEmail = InputValidator.sanitizeText(email);
+
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(sanitizedEmail, password);
       
       if (error) {
+        // Enhanced error handling for security
+        let errorMessage = 'Credenciais inválidas';
+        
+        if (error.message.includes('rate limit') || error.message.includes('tentativas')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('Invalid login credentials')) {
+          errorMessage = 'Email ou senha incorretos';
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'Por favor, confirme seu email antes de fazer login';
+        }
+        
         toast({
           title: "Erro no login",
-          description: error.message || "Credenciais inválidas",
+          description: errorMessage,
           variant: "destructive",
         });
       } else {
@@ -85,7 +110,11 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
                 required
+                autoComplete="email"
               />
+              {errors.email && (
+                <p className="text-sm text-red-600">{errors.email}</p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -98,6 +127,7 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Sua senha"
                   required
+                  autoComplete="current-password"
                 />
                 <Button
                   type="button"
@@ -113,6 +143,9 @@ const Login = () => {
                   )}
                 </Button>
               </div>
+              {errors.password && (
+                <p className="text-sm text-red-600">{errors.password}</p>
+              )}
             </div>
 
             <div className="text-right">
