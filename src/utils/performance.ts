@@ -103,7 +103,6 @@ export const useVirtualList = (items: any[], itemHeight: number, containerHeight
 export const optimizeImageUrl = (url: string, width?: number, height?: number): string => {
   if (!url) return '';
   
-  // If using a CDN that supports image optimization, add parameters
   const urlObj = new URL(url);
   
   if (width) urlObj.searchParams.set('w', width.toString());

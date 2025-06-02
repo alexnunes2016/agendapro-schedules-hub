@@ -50,12 +50,11 @@ export const useErrorHandler = () => {
       variant: "destructive",
     });
 
-    // Log error for monitoring (in production, this would go to a service like Sentry)
+    // Log error for monitoring
     logError(error, context, errorCode);
   };
 
   const sanitizeErrorMessage = (message: string): string => {
-    // Remove sensitive information from error messages
     const sensitivePatterns = [
       /password/i,
       /token/i,
@@ -83,9 +82,7 @@ export const useErrorHandler = () => {
       url: window.location.href
     };
 
-    // In production, send to monitoring service
     if (process.env.NODE_ENV === 'production') {
-      // TODO: Integrate with error monitoring service (Sentry, LogRocket, etc.)
       console.error('[PRODUCTION ERROR]', errorLog);
     } else {
       console.error('[DEV ERROR]', errorLog);

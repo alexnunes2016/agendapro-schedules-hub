@@ -15,11 +15,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  console.log('AuthProvider mounting...');
+  
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('AuthProvider useEffect running...');
     let mounted = true;
 
     // Set up auth state listener FIRST
@@ -32,7 +35,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user && event !== 'SIGNED_OUT') {
-          // Use setTimeout to avoid potential deadlocks
           setTimeout(() => {
             if (mounted) {
               fetchProfile(session.user.id);
@@ -50,12 +52,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session?.user?.id);
       if (!mounted) return;
       
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
       }
+      setLoading(false);
+    }).catch((error) => {
+      console.error('Error getting session:', error);
       setLoading(false);
     });
 
@@ -86,6 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
+    console.log('Attempting sign in...');
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -94,6 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signUp = async (email: string, password: string, userData: any) => {
+    console.log('Attempting sign up...');
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -105,9 +113,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
+    console.log('Signing out...');
     await supabase.auth.signOut();
     setProfile(null);
   };
+
+  console.log('AuthProvider rendering with loading:', loading, 'user:', !!user);
 
   return (
     <AuthContext.Provider value={{
