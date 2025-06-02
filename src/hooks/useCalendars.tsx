@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -51,15 +50,19 @@ export const useCalendars = () => {
       const calendarsWithCount = await Promise.all(
         (data || []).map(async (calendar) => {
           try {
+            // Usar uma query mais simples para contar agendamentos
             const { data: countData, error: countError } = await supabase
-              .rpc('get_calendar_appointments_count', { calendar_id: calendar.id });
+              .from('appointments')
+              .select('id', { count: 'exact' })
+              .eq('user_id', user.id);
             
             if (countError) {
               console.error('Error fetching appointments count:', countError);
               return { ...calendar, appointments_count: 0 };
             }
             
-            return { ...calendar, appointments_count: countData || 0 };
+            // Se não temos calendar_id nos appointments ainda, contar todos os appointments do usuário
+            return { ...calendar, appointments_count: countData?.length || 0 };
           } catch (error) {
             console.error('Error in appointments count:', error);
             return { ...calendar, appointments_count: 0 };

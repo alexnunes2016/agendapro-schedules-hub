@@ -7,9 +7,12 @@ import { ArrowLeft, Calendar, Plus, Settings, Clock, Users } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth";
 import CreateCalendarModal from "@/components/calendar/CreateCalendarModal";
 import CalendarList from "@/components/calendar/CalendarList";
+import CreateProfessionalModal from "@/components/professionals/CreateProfessionalModal";
+import ProfessionalsList from "@/components/professionals/ProfessionalsList";
 
 const CalendarSettings = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCreateProfessionalModal, setShowCreateProfessionalModal] = useState(false);
   const { user, loading: authLoading } = useAuth();
 
   if (authLoading) {
@@ -62,10 +65,16 @@ const CalendarSettings = () => {
                 </h1>
               </div>
             </div>
-            <Button onClick={() => setShowCreateModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Agenda
-            </Button>
+            <div className="flex space-x-2">
+              <Button onClick={() => setShowCreateProfessionalModal(true)} variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Profissional
+              </Button>
+              <Button onClick={() => setShowCreateModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Agenda
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -73,8 +82,9 @@ const CalendarSettings = () => {
       <div className="p-6">
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Lista de Agendas */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
             <CalendarList />
+            <ProfessionalsList />
           </div>
 
           {/* Configurações Gerais */}
@@ -108,7 +118,7 @@ const CalendarSettings = () => {
 
                 <Button variant="outline" className="w-full">
                   <Settings className="h-4 w-4 mr-2" />
-                  Configurar Horários
+                  Configurar Horários Globais
                 </Button>
               </CardContent>
             </Card>
@@ -117,16 +127,22 @@ const CalendarSettings = () => {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Users className="h-5 w-5" />
-                  <span>Permissões</span>
+                  <span>Estatísticas</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 mb-4">
-                  Configure quem pode acessar e modificar cada agenda
-                </p>
-                <Button variant="outline" className="w-full">
-                  Gerenciar Permissões
-                </Button>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Total de Agendas:</span>
+                  <span className="font-medium">-</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Profissionais Ativos:</span>
+                  <span className="font-medium">-</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Agendamentos do Mês:</span>
+                  <span className="font-medium">-</span>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -136,6 +152,11 @@ const CalendarSettings = () => {
       <CreateCalendarModal
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
+      />
+
+      <CreateProfessionalModal
+        open={showCreateProfessionalModal}
+        onOpenChange={setShowCreateProfessionalModal}
       />
     </div>
   );
