@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -74,23 +73,6 @@ const Index = () => {
               <span>✅ Sem cartão de crédito</span>
               <span>✅ Configuração em 5 minutos</span>
               <span>📞 Suporte personalizado 24/7</span>
-            </div>
-
-            <div className="mt-8 text-center">
-              <p className="text-lg font-semibold text-gray-700 mb-2">
-                Mais de 3.000 profissionais confiam no AgendoPro
-              </p>
-              <div className="flex justify-center items-center space-x-2">
-                <div className="flex -space-x-1">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="w-8 h-8 bg-blue-600 rounded-full border-2 border-white flex items-center justify-center">
-                      <span className="text-white text-xs font-semibold">{i}</span>
-                    </div>
-                  ))}
-                </div>
-                <span className="text-yellow-500 text-xl">★★★★★</span>
-                <span className="text-gray-600">4.9/5 avaliação média</span>
-              </div>
             </div>
           </div>
         </div>

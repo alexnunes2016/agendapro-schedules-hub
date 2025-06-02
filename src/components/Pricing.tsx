@@ -43,10 +43,10 @@ const Pricing = () => {
       period: "/mês",
       description: "Para profissionais que crescem",
       features: [
+        "Tudo do Básico +",
         "Agendamentos ilimitados",
         "Até 5 usuários",
-        "Lembretes por email",
-        "Relatórios básicos",
+        "Relatórios avançados",
         "Integração com calendário",
         "Suporte prioritário"
       ],

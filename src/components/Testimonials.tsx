@@ -67,10 +67,24 @@ const Testimonials = () => {
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             O Que Nossos Clientes Dizem
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Mais de 10.000 profissionais já revolucionaram seus negócios com nossa IA. 
-            Veja os resultados reais que estão alcançando.
-          </p>
+          
+          {/* Seção movida da Index */}
+          <div className="mb-8">
+            <p className="text-lg font-semibold text-gray-700 mb-2">
+              Mais de 3.000 profissionais confiam no AgendoPro
+            </p>
+            <div className="flex justify-center items-center space-x-2">
+              <div className="flex -space-x-1">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="w-8 h-8 bg-blue-600 rounded-full border-2 border-white flex items-center justify-center">
+                    <span className="text-white text-xs font-semibold">{i}</span>
+                  </div>
+                ))}
+              </div>
+              <span className="text-yellow-500 text-xl">★★★★★</span>
+              <span className="text-gray-600">4.9/5 avaliação média</span>
+            </div>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
