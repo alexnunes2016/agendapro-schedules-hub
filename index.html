@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>agendapro-schedules-hub</title>
+    <meta name="description" content="Revolucione Seus Agendamentos com Tecnologia Avançada" />
+    <meta name="author" content="Lovable" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234F46E5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg>" type="image/svg+xml">
+
+    <meta property="og:title" content="agendapro-schedules-hub" />
+    <meta property="og:description" content="Revolucione Seus Agendamentos com Tecnologia Avançada" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@lovable_dev" />
+    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Chatwoot Script -->
+    <script>
+      (function(d,t) {
+        window.chatwootSettings = {
+          "position": "right",
+          "type": "expanded_bubble",
+          "launcherTitle": "Como podemos te ajudar hoje?"
+        };
+        
+        var BASE_URL = "https://mychatapp.judahtech.com.br";
+        var g = d.createElement(t);
+        var s = d.getElementsByTagName(t)[0];
+        g.src = BASE_URL + "/packs/js/sdk.js";
+        g.defer = true;
+        g.async = true;
+        s.parentNode.insertBefore(g, s);
+        g.onload = function() {
+          window.chatwootSDK.run({
+            websiteToken: 'JAvi8jMPBWqUTj4D7p5gBh65',
+            baseUrl: BASE_URL
+          });
+        };
+      })(document, "script");
+    </script>
+  </body>
+</html>
