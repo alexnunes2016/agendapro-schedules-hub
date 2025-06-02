@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,9 +16,9 @@ export const useAppointmentManagement = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const isAdmin = PermissionManager.isAdmin(profile);
-  const isSuperAdmin = PermissionManager.isSuperAdmin(profile);
-  const canViewAllAppointments = PermissionManager.canViewAllAppointments(profile);
+  // Fixed admin checks to use profile directly instead of async calls
+  const isAdmin = PermissionManager.isAdminSync(profile);
+  const isSuperAdmin = PermissionManager.isSuperAdminSync(profile);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -197,11 +196,8 @@ export const useAppointmentManagement = () => {
     user,
     authLoading,
     loading,
-    error,
     isAdmin,
     isSuperAdmin,
-    appointments,
-    services,
     searchTerm,
     statusFilter,
     filteredAppointments,

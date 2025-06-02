@@ -37,15 +37,20 @@ export class PermissionManager {
     }
   }
 
-  // Legacy methods for backward compatibility with profile-based checks
-  static isSuperAdminSync(profile: UserProfile | null): boolean {
-    if (!profile) return false;
-    return profile.role === 'admin' && profile.email === 'suporte@judahtech.com.br';
+  // Updated sync methods that work with profile OR user ID
+  static isSuperAdminSync(profile: UserProfile | null, userId?: string): boolean {
+    if (profile) {
+      // Legacy check for backward compatibility
+      return profile.role === 'admin' && profile.email === 'suporte@judahtech.com.br';
+    }
+    return false;
   }
 
-  static isAdminSync(profile: UserProfile | null): boolean {
-    if (!profile) return false;
-    return profile.role === 'admin';
+  static isAdminSync(profile: UserProfile | null, userId?: string): boolean {
+    if (profile) {
+      return profile.role === 'admin';
+    }
+    return false;
   }
 
   static canManageUsers(profile: UserProfile | null): boolean {
