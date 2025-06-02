@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,16 +7,25 @@ import { Label } from "@/components/ui/label";
 import { Download, FileText, Users, Calendar, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 interface SystemStats {
   total_users: number;
   active_users: number;
   inactive_users: number;
   new_users_this_month: number;
-  plan_distribution: Record<string, number>;
   total_appointments: number;
   appointments_this_month: number;
   total_revenue_estimate: number;
+  plan_distribution: Record<string, number>;
+}
+
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => void;
+  }
 }
 
 const AdminReportsTab = () => {
@@ -40,7 +48,9 @@ const AdminReportsTab = () => {
       
       if (error) throw error;
       
-      setStats(data);
+      if (data && typeof data === 'object') {
+        setStats(data as unknown as SystemStats);
+      }
     } catch (error: any) {
       console.error('Error fetching system stats:', error);
       toast({
@@ -54,66 +64,110 @@ const AdminReportsTab = () => {
   };
 
   const handleExportPDF = async () => {
-    try {
-      // Implementar exportação PDF real
-      const reportData = {
-        type: reportType,
-        dateRange,
-        startDate,
-        endDate,
-        stats,
-        timestamp: new Date().toISOString()
-      };
+    if (!stats) return;
 
-      const blob = new Blob([JSON.stringify(reportData, null, 2)], { 
-        type: 'application/json' 
+    try {
+      const doc = new jsPDF();
+      
+      // Adicionar título
+      doc.setFontSize(16);
+      doc.text('Relatório Administrativo', 14, 15);
+      
+      // Adicionar informações do relatório
+      doc.setFontSize(12);
+      doc.text(`Tipo: ${reportType}`, 14, 25);
+      doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, 32);
+      
+      // Preparar dados para a tabela
+      let data = [];
+      if (reportType === 'users') {
+        data = [
+          ['Total de Usuários', stats.total_users],
+          ['Usuários Ativos', stats.active_users],
+          ['Usuários Inativos', stats.inactive_users],
+          ['Novos Usuários Este Mês', stats.new_users_this_month]
+        ];
+      } else if (reportType === 'plans') {
+        data = Object.entries(stats.plan_distribution || {}).map(([plan, count]) => [plan, count]);
+      }
+      
+      // Adicionar tabela
+      doc.autoTable({
+        startY: 40,
+        head: [['Métrica', 'Valor']],
+        body: data,
+        theme: 'grid',
+        styles: { fontSize: 10, cellPadding: 5 },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255 }
       });
       
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `relatorio-${reportType}-${Date.now()}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Salvar o PDF
+      doc.save(`relatorio-${reportType}-${Date.now()}.pdf`);
 
       toast({
         title: "Relatório Exportado",
-        description: "O relatório foi exportado com sucesso.",
+        description: "O relatório PDF foi exportado com sucesso.",
       });
     } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
       toast({
         title: "Erro na Exportação",
-        description: "Erro ao exportar o relatório",
+        description: "Erro ao exportar o relatório PDF",
         variant: "destructive",
       });
     }
   };
 
   const handleExportExcel = async () => {
+    if (!stats) return;
+
     try {
-      // Implementar exportação Excel real
-      const csvData = generateCSVData();
-      const blob = new Blob([csvData], { type: 'text/csv' });
+      // Preparar dados para o Excel
+      let data = [];
+      const reportDate = new Date().toLocaleDateString('pt-BR');
       
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `relatorio-${reportType}-${Date.now()}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      if (reportType === 'users') {
+        data = [
+          ['Relatório Administrativo - Usuários'],
+          ['Data:', reportDate],
+          [''],
+          ['Métrica', 'Valor'],
+          ['Total de Usuários', stats.total_users],
+          ['Usuários Ativos', stats.active_users],
+          ['Usuários Inativos', stats.inactive_users],
+          ['Novos Usuários Este Mês', stats.new_users_this_month]
+        ];
+      } else if (reportType === 'plans') {
+        data = [
+          ['Relatório Administrativo - Distribuição de Planos'],
+          ['Data:', reportDate],
+          [''],
+          ['Plano', 'Quantidade'],
+          ...Object.entries(stats.plan_distribution || {})
+        ];
+      }
+      
+      // Criar workbook e worksheet
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
+      
+      // Configurar largura das colunas
+      const wscols = [{ wch: 30 }, { wch: 15 }];
+      ws['!cols'] = wscols;
+      
+      // Salvar o arquivo
+      XLSX.writeFile(wb, `relatorio-${reportType}-${Date.now()}.xlsx`);
 
       toast({
         title: "Relatório Exportado",
-        description: "O relatório CSV foi exportado com sucesso.",
+        description: "O relatório XLSX foi exportado com sucesso.",
       });
     } catch (error) {
+      console.error('Erro ao exportar XLSX:', error);
       toast({
         title: "Erro na Exportação",
-        description: "Erro ao exportar o relatório CSV",
+        description: "Erro ao exportar o relatório XLSX",
         variant: "destructive",
       });
     }
@@ -171,11 +225,11 @@ const AdminReportsTab = () => {
         <div className="flex space-x-2">
           <Button onClick={handleExportPDF} variant="outline">
             <Download className="h-4 w-4 mr-2" />
-            Exportar JSON
+            Exportar PDF
           </Button>
           <Button onClick={handleExportExcel} variant="outline">
             <Download className="h-4 w-4 mr-2" />
-            Exportar CSV
+            Exportar XLSX
           </Button>
         </div>
       </div>
