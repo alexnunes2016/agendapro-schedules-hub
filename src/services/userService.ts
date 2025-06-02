@@ -209,7 +209,7 @@ export const userService = {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('role, is_active')
+        .select('role, is_active, email')
         .eq('id', userId)
         .single();
 
@@ -217,25 +217,28 @@ export const userService = {
         throw new AppError(`Falha ao verificar permissões: ${error.message}`, 'PERMISSION_CHECK_ERROR');
       }
 
-      // Corrigindo a lógica de comparação de roles
       const userRole = data?.role;
       const isActive = data?.is_active;
+      const userEmail = data?.email;
       
       if (!isActive) {
         return false;
       }
 
-      // Hierarquia de roles: super_admin > admin > user
-      if (userRole === 'super_admin') {
-        return true;
+      // Verificar se é super admin (admin + email específico)
+      const isSuperAdmin = userRole === 'admin' && userEmail === 'suporte@judahtech.com.br';
+      
+      // Hierarquia de permissões
+      if (isSuperAdmin) {
+        return true; // Super admin tem acesso a tudo
       }
       
       if (userRole === 'admin' && (requiredRole === 'admin' || requiredRole === 'user')) {
-        return true;
+        return true; // Admin tem acesso a admin e user
       }
       
       if (userRole === 'user' && requiredRole === 'user') {
-        return true;
+        return true; // User tem acesso apenas a user
       }
 
       return false;
