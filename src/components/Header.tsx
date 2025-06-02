@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -18,10 +17,10 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
-            <Link to="/features" className="text-gray-600 hover:text-blue-600 transition-colors text-sm lg:text-base">
+            <Link to="/funcionalidades" className="text-gray-600 hover:text-blue-600 transition-colors text-sm lg:text-base">
               Funcionalidades
             </Link>
-            <Link to="/pricing" className="text-gray-600 hover:text-blue-600 transition-colors text-sm lg:text-base">
+            <Link to="/precos" className="text-gray-600 hover:text-blue-600 transition-colors text-sm lg:text-base">
               Preços
             </Link>
             <Link to="/demonstração" className="text-gray-600 hover:text-blue-600 transition-colors text-sm lg:text-base">
@@ -54,14 +53,14 @@ const Header = () => {
           <nav className="md:hidden mt-3 pb-4 border-t">
             <div className="flex flex-col space-y-3 pt-4">
               <Link 
-                to="/features" 
+                to="/funcionalidades" 
                 className="text-gray-600 hover:text-blue-600 transition-colors py-2 px-2 rounded hover:bg-gray-50"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Funcionalidades
               </Link>
               <Link 
-                to="/pricing" 
+                to="/precos" 
                 className="text-gray-600 hover:text-blue-600 transition-colors py-2 px-2 rounded hover:bg-gray-50"
                 onClick={() => setIsMenuOpen(false)}
               >

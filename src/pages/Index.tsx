@@ -62,7 +62,7 @@ const Index = () => {
                   Teste Grátis por 14 Dias
                 </Button>
               </Link>
-              <Link to="/features">
+              <Link to="/funcionalidades">
                 <Button size="lg" variant="outline" className="text-lg px-8 py-4">
                   Ver Funcionalidades
                 </Button>
