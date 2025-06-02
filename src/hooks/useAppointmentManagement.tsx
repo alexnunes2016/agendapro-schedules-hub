@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
@@ -16,6 +16,7 @@ export const useAppointmentManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -25,18 +26,14 @@ export const useAppointmentManagement = () => {
     }
   }, [user, authLoading, navigate]);
 
-  useEffect(() => {
-    if (!authLoading && user) {
-      fetchAppointments();
-      fetchServices();
-    }
-  }, [user, authLoading]);
-
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     if (!user) return;
 
     try {
-      let query = supabase
+      setLoading(true);
+      setError(null);
+      
+      let query = (supabase as any)
         .from('appointments')
         .select(`
           *,
@@ -58,8 +55,9 @@ export const useAppointmentManagement = () => {
 
       if (error) throw error;
       setAppointments(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching appointments:', error);
+      setError(error.message);
       toast({
         title: "Erro ao carregar agendamentos",
         description: "Tente novamente em alguns instantes",
@@ -68,13 +66,13 @@ export const useAppointmentManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, isAdmin, isSuperAdmin, toast]);
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     if (!user) return;
 
     try {
-      let query = supabase
+      let query = (supabase as any)
         .from('services')
         .select('*')
         .eq('is_active', true);
@@ -88,16 +86,32 @@ export const useAppointmentManagement = () => {
 
       if (error) throw error;
       setServices(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching services:', error);
     }
-  };
+  }, [user, isAdmin, isSuperAdmin]);
 
-  const updateAppointmentStatus = async (appointmentId: string, status: string) => {
+  useEffect(() => {
+    if (!authLoading && user) {
+      fetchAppointments();
+      fetchServices();
+    }
+  }, [user, authLoading, fetchAppointments, fetchServices]);
+
+  const updateAppointmentStatus = useCallback(async (appointmentId: string, status: string) => {
+    if (!appointmentId || !status) {
+      toast({
+        title: "Erro de validação",
+        description: "Dados incompletos para atualização",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      let query = supabase
+      let query = (supabase as any)
         .from('appointments')
-        .update({ status })
+        .update({ status, updated_at: new Date().toISOString() })
         .eq('id', appointmentId);
 
       // Se não for admin ou super admin, adicionar filtro do usuário
@@ -115,23 +129,32 @@ export const useAppointmentManagement = () => {
       });
 
       fetchAppointments();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating appointment status:', error);
       toast({
         title: "Erro ao atualizar status",
-        description: "Tente novamente em alguns instantes",
+        description: error.message || "Tente novamente em alguns instantes",
         variant: "destructive",
       });
     }
-  };
+  }, [isAdmin, isSuperAdmin, user?.id, fetchAppointments, toast]);
 
-  const deleteAppointment = async (appointmentId: string) => {
+  const deleteAppointment = useCallback(async (appointmentId: string) => {
+    if (!appointmentId) {
+      toast({
+        title: "Erro de validação",
+        description: "ID do agendamento é obrigatório",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!confirm("Tem certeza que deseja excluir este agendamento? Esta ação não pode ser desfeita.")) {
       return;
     }
 
     try {
-      let query = supabase
+      let query = (supabase as any)
         .from('appointments')
         .delete()
         .eq('id', appointmentId);
@@ -151,19 +174,20 @@ export const useAppointmentManagement = () => {
       });
 
       fetchAppointments();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting appointment:', error);
       toast({
         title: "Erro ao excluir agendamento",
-        description: "Tente novamente em alguns instantes",
+        description: error.message || "Tente novamente em alguns instantes",
         variant: "destructive",
       });
     }
-  };
+  }, [isAdmin, isSuperAdmin, user?.id, fetchAppointments, toast]);
 
   const filteredAppointments = appointments.filter((appointment: any) => {
-    const matchesSearch = appointment.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (appointment.services?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = appointment.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (appointment.services?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (appointment.client_email || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || appointment.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -172,6 +196,7 @@ export const useAppointmentManagement = () => {
     user,
     authLoading,
     loading,
+    error,
     isAdmin,
     isSuperAdmin,
     appointments,

@@ -26,7 +26,7 @@ export class AppError extends Error {
 export const useErrorHandler = () => {
   const { toast } = useToast();
 
-  const handleError = (error: unknown, context?: string) => {
+  const handleError = React.useCallback((error: unknown, context?: string) => {
     console.error('Error in context:', context, error);
 
     let errorMessage = 'Ocorreu um erro inesperado';
@@ -52,9 +52,9 @@ export const useErrorHandler = () => {
 
     // Log error for monitoring
     logError(error, context, errorCode);
-  };
+  }, [toast]);
 
-  const sanitizeErrorMessage = (message: string): string => {
+  const sanitizeErrorMessage = React.useCallback((message: string): string => {
     const sensitivePatterns = [
       /password/i,
       /token/i,
@@ -69,9 +69,9 @@ export const useErrorHandler = () => {
     });
 
     return sanitized;
-  };
+  }, []);
 
-  const logError = (error: unknown, context?: string, code?: string) => {
+  const logError = React.useCallback((error: unknown, context?: string, code?: string) => {
     const errorLog = {
       timestamp: new Date().toISOString(),
       error: error instanceof Error ? error.message : String(error),
@@ -87,7 +87,7 @@ export const useErrorHandler = () => {
     } else {
       console.error('[DEV ERROR]', errorLog);
     }
-  };
+  }, []);
 
   return { handleError, AppError };
 };
@@ -96,13 +96,15 @@ export const withErrorBoundary = <P extends object>(
   Component: React.ComponentType<P>,
   fallback?: React.ComponentType<{ error: Error; resetError: () => void }>
 ) => {
-  const WrappedComponent = (props: P) => {
+  const WrappedComponent = React.memo((props: P) => {
     return (
       <ErrorBoundary fallback={fallback}>
         <Component {...props} />
       </ErrorBoundary>
     );
-  };
+  });
+
+  WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
 
   return WrappedComponent;
 };
@@ -145,7 +147,7 @@ class ErrorBoundary extends React.Component<
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors"
             >
               Recarregar Página
             </button>

@@ -1,5 +1,5 @@
 
-import { useMemo, useCallback, lazy, useState, useEffect } from 'react';
+import { useMemo, useCallback, lazy, useState, useEffect, useRef } from 'react';
 
 // Lazy load pages for better performance
 export const LazyDashboard = lazy(() => import('@/pages/Dashboard'));
@@ -103,17 +103,73 @@ export const useVirtualList = (items: any[], itemHeight: number, containerHeight
 export const optimizeImageUrl = (url: string, width?: number, height?: number): string => {
   if (!url) return '';
   
-  const urlObj = new URL(url);
-  
-  if (width) urlObj.searchParams.set('w', width.toString());
-  if (height) urlObj.searchParams.set('h', height.toString());
-  
-  return urlObj.toString();
+  try {
+    const urlObj = new URL(url);
+    
+    if (width) urlObj.searchParams.set('w', width.toString());
+    if (height) urlObj.searchParams.set('h', height.toString());
+    
+    return urlObj.toString();
+  } catch {
+    return url;
+  }
 };
 
 // Memory cleanup utilities
 export const useCleanup = (cleanup: () => void) => {
+  const cleanupRef = useRef(cleanup);
+  cleanupRef.current = cleanup;
+
   useEffect(() => {
-    return cleanup;
-  }, [cleanup]);
+    return () => cleanupRef.current();
+  }, []);
+};
+
+// Intersection Observer hook for lazy loading
+export const useIntersectionObserver = (
+  elementRef: React.RefObject<Element>,
+  options?: IntersectionObserverInit
+) => {
+  const [isIntersecting, setIsIntersecting] = useState(false);
+
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsIntersecting(entry.isIntersecting),
+      options
+    );
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [elementRef, options]);
+
+  return isIntersecting;
+};
+
+// Request deduplication
+export const useRequestDeduplication = () => {
+  const requestCache = useRef(new Map<string, Promise<any>>());
+
+  const dedupedRequest = useCallback(async <T>(key: string, requestFn: () => Promise<T>): Promise<T> => {
+    if (requestCache.current.has(key)) {
+      return requestCache.current.get(key);
+    }
+
+    const promise = requestFn();
+    requestCache.current.set(key, promise);
+
+    try {
+      const result = await promise;
+      requestCache.current.delete(key);
+      return result;
+    } catch (error) {
+      requestCache.current.delete(key);
+      throw error;
+    }
+  }, []);
+
+  return dedupedRequest;
 };

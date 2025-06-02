@@ -1,8 +1,21 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { AppError } from "@/utils/errorHandler";
+
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  plan: string;
+  role: string;
+  is_active: boolean;
+  email_confirmed: boolean;
+  plan_expires_at?: string;
+  organization_id?: string;
+}
 
 export const userService = {
-  async fetchUsers() {
+  async fetchUsers(): Promise<UserData[]> {
     console.log('Fetching users...');
     
     try {
@@ -15,24 +28,27 @@ export const userService = {
 
       if (error) {
         console.error('Error details:', error);
-        throw new Error(`Falha ao carregar usuários: ${error.message}`);
+        throw new AppError(`Falha ao carregar usuários: ${error.message}`, 'FETCH_USERS_ERROR');
       }
       
       return data || [];
     } catch (error: any) {
       console.error('Error in fetchUsers:', error);
-      throw new Error(error.message || 'Erro desconhecido ao carregar usuários');
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(error.message || 'Erro desconhecido ao carregar usuários', 'FETCH_USERS_UNKNOWN');
     }
   },
 
-  async updateUserPlan(userId: string, newPlan: string) {
+  async updateUserPlan(userId: string, newPlan: string): Promise<void> {
     if (!userId || !newPlan) {
-      throw new Error('ID do usuário e plano são obrigatórios');
+      throw new AppError('ID do usuário e plano são obrigatórios', 'VALIDATION_ERROR');
     }
 
     const validPlans = ['free', 'basico', 'profissional', 'premium'];
     if (!validPlans.includes(newPlan)) {
-      throw new Error('Plano inválido');
+      throw new AppError('Plano inválido', 'INVALID_PLAN');
     }
 
     try {
@@ -45,17 +61,20 @@ export const userService = {
         .eq('id', userId);
 
       if (error) {
-        throw new Error(`Falha ao atualizar plano: ${error.message}`);
+        throw new AppError(`Falha ao atualizar plano: ${error.message}`, 'UPDATE_PLAN_ERROR');
       }
     } catch (error: any) {
       console.error('Error in updateUserPlan:', error);
-      throw new Error(error.message || 'Erro ao atualizar plano do usuário');
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(error.message || 'Erro ao atualizar plano do usuário', 'UPDATE_PLAN_UNKNOWN');
     }
   },
 
-  async toggleUserStatus(userId: string, newStatus: boolean) {
+  async toggleUserStatus(userId: string, newStatus: boolean): Promise<void> {
     if (!userId) {
-      throw new Error('ID do usuário é obrigatório');
+      throw new AppError('ID do usuário é obrigatório', 'VALIDATION_ERROR');
     }
 
     try {
@@ -68,17 +87,20 @@ export const userService = {
         .eq('id', userId);
 
       if (error) {
-        throw new Error(`Falha ao alterar status: ${error.message}`);
+        throw new AppError(`Falha ao alterar status: ${error.message}`, 'TOGGLE_STATUS_ERROR');
       }
     } catch (error: any) {
       console.error('Error in toggleUserStatus:', error);
-      throw new Error(error.message || 'Erro ao alterar status do usuário');
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(error.message || 'Erro ao alterar status do usuário', 'TOGGLE_STATUS_UNKNOWN');
     }
   },
 
-  async resetUserPassword(userId: string) {
+  async resetUserPassword(userId: string): Promise<void> {
     if (!userId) {
-      throw new Error('ID do usuário é obrigatório');
+      throw new AppError('ID do usuário é obrigatório', 'VALIDATION_ERROR');
     }
 
     try {
@@ -87,17 +109,20 @@ export const userService = {
       });
 
       if (error) {
-        throw new Error(`Falha ao resetar senha: ${error.message}`);
+        throw new AppError(`Falha ao resetar senha: ${error.message}`, 'RESET_PASSWORD_ERROR');
       }
     } catch (error: any) {
       console.error('Error in resetUserPassword:', error);
-      throw new Error(error.message || 'Erro ao resetar senha');
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(error.message || 'Erro ao resetar senha', 'RESET_PASSWORD_UNKNOWN');
     }
   },
 
-  async toggleEmailConfirmation(userId: string, newStatus: boolean) {
+  async toggleEmailConfirmation(userId: string, newStatus: boolean): Promise<void> {
     if (!userId) {
-      throw new Error('ID do usuário é obrigatório');
+      throw new AppError('ID do usuário é obrigatório', 'VALIDATION_ERROR');
     }
 
     try {
@@ -110,23 +135,26 @@ export const userService = {
         .eq('id', userId);
 
       if (error) {
-        throw new Error(`Falha ao alterar confirmação de email: ${error.message}`);
+        throw new AppError(`Falha ao alterar confirmação de email: ${error.message}`, 'TOGGLE_EMAIL_ERROR');
       }
     } catch (error: any) {
       console.error('Error in toggleEmailConfirmation:', error);
-      throw new Error(error.message || 'Erro ao alterar confirmação de email');
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(error.message || 'Erro ao alterar confirmação de email', 'TOGGLE_EMAIL_UNKNOWN');
     }
   },
 
-  async updatePlanExpiration(userId: string, newDate: string) {
+  async updatePlanExpiration(userId: string, newDate: string): Promise<void> {
     if (!userId || !newDate) {
-      throw new Error('ID do usuário e data são obrigatórios');
+      throw new AppError('ID do usuário e data são obrigatórios', 'VALIDATION_ERROR');
     }
 
     // Validate date format
     const date = new Date(newDate);
     if (isNaN(date.getTime())) {
-      throw new Error('Data inválida');
+      throw new AppError('Data inválida', 'INVALID_DATE');
     }
 
     try {
@@ -139,17 +167,20 @@ export const userService = {
         .eq('id', userId);
 
       if (error) {
-        throw new Error(`Falha ao atualizar expiração: ${error.message}`);
+        throw new AppError(`Falha ao atualizar expiração: ${error.message}`, 'UPDATE_EXPIRATION_ERROR');
       }
     } catch (error: any) {
       console.error('Error in updatePlanExpiration:', error);
-      throw new Error(error.message || 'Erro ao atualizar expiração do plano');
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(error.message || 'Erro ao atualizar expiração do plano', 'UPDATE_EXPIRATION_UNKNOWN');
     }
   },
 
-  async deleteUser(userId: string) {
+  async deleteUser(userId: string): Promise<void> {
     if (!userId) {
-      throw new Error('ID do usuário é obrigatório');
+      throw new AppError('ID do usuário é obrigatório', 'VALIDATION_ERROR');
     }
 
     try {
@@ -159,11 +190,40 @@ export const userService = {
         .eq('id', userId);
 
       if (error) {
-        throw new Error(`Falha ao excluir usuário: ${error.message}`);
+        throw new AppError(`Falha ao excluir usuário: ${error.message}`, 'DELETE_USER_ERROR');
       }
     } catch (error: any) {
       console.error('Error in deleteUser:', error);
-      throw new Error(error.message || 'Erro ao excluir usuário');
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(error.message || 'Erro ao excluir usuário', 'DELETE_USER_UNKNOWN');
+    }
+  },
+
+  async validateUserPermissions(userId: string, requiredRole: string = 'user'): Promise<boolean> {
+    if (!userId) {
+      throw new AppError('ID do usuário é obrigatório', 'VALIDATION_ERROR');
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role, is_active')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        throw new AppError(`Falha ao verificar permissões: ${error.message}`, 'PERMISSION_CHECK_ERROR');
+      }
+
+      return data?.is_active && (data?.role === requiredRole || data?.role === 'admin' || data?.role === 'super_admin');
+    } catch (error: any) {
+      console.error('Error in validateUserPermissions:', error);
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(error.message || 'Erro ao verificar permissões do usuário', 'PERMISSION_CHECK_UNKNOWN');
     }
   }
 };
