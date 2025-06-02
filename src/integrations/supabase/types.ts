@@ -279,6 +279,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          agendopro_id: string | null
           clinic_name: string | null
           created_at: string | null
           email: string
@@ -294,6 +295,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          agendopro_id?: string | null
           clinic_name?: string | null
           created_at?: string | null
           email: string
@@ -309,6 +311,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          agendopro_id?: string | null
           clinic_name?: string | null
           created_at?: string | null
           email?: string
