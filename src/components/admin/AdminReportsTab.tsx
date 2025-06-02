@@ -25,6 +25,9 @@ interface SystemStats extends SystemStatsResponse {
   appointments_this_month: number;
 }
 
+type DateRange = "last_7_days" | "last_30_days" | "last_3_months" | "last_year" | "custom";
+type ReportType = "users" | "plans" | "appointments" | "revenue";
+
 declare module 'jspdf' {
   interface jsPDF {
     autoTable: (options: any) => void;
@@ -32,41 +35,70 @@ declare module 'jspdf' {
 }
 
 const AdminReportsTab = () => {
-  const [reportType, setReportType] = useState("users");
-  const [dateRange, setDateRange] = useState("last_30_days");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [reportType, setReportType] = useState<ReportType>("users");
+  const [dateRange, setDateRange] = useState<DateRange>("last_30_days");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchSystemStats();
-  }, []);
+  }, [dateRange, startDate, endDate]);
 
   const fetchSystemStats = async () => {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase.rpc('get_system_statistics');
+      // Preparar datas para o filtro
+      let filterStartDate: string | null = startDate;
+      let filterEndDate: string | null = endDate;
+
+      if (dateRange !== "custom") {
+        const now = new Date();
+        switch (dateRange) {
+          case "last_7_days":
+            filterStartDate = new Date(now.setDate(now.getDate() - 7)).toISOString().split('T')[0];
+            break;
+          case "last_30_days":
+            filterStartDate = new Date(now.setDate(now.getDate() - 30)).toISOString().split('T')[0];
+            break;
+          case "last_3_months":
+            filterStartDate = new Date(now.setMonth(now.getMonth() - 3)).toISOString().split('T')[0];
+            break;
+          case "last_year":
+            filterStartDate = new Date(now.setFullYear(now.getFullYear() - 1)).toISOString().split('T')[0];
+            break;
+          default:
+            filterStartDate = null;
+            filterEndDate = null;
+        }
+        filterEndDate = new Date().toISOString().split('T')[0];
+      }
+
+      const { data: statsData, error } = await supabase.rpc('get_system_statistics', {
+        start_date: filterStartDate || null,
+        end_date: filterEndDate || null
+      } as any);
 
       if (error) throw error;
 
-      if (data && typeof data === 'object' && 'total_users' in data) {
-        const statsResponse: SystemStatsResponse = {
-          total_users: data.total_users as number,
-          active_users: data.active_users as number,
-          inactive_users: data.inactive_users as number,
-          new_users_this_month: data.new_users_this_month as number,
-          total_revenue_estimate: data.total_revenue_estimate as number,
-          plan_distribution: data.plan_distribution as Record<string, number>
+      if (statsData && typeof statsData === 'object') {
+        const rawStats = statsData as Record<string, any>;
+        
+        const newStats: SystemStats = {
+          total_users: Number(rawStats.total_users || 0),
+          active_users: Number(rawStats.active_users || 0),
+          inactive_users: Number(rawStats.inactive_users || 0),
+          new_users_this_month: Number(rawStats.new_users_this_month || 0),
+          total_revenue_estimate: Number(rawStats.total_revenue_estimate || 0),
+          plan_distribution: rawStats.plan_distribution || {},
+          total_appointments: 0,
+          appointments_this_month: 0
         };
 
-        setStats({
-          ...statsResponse,
-          total_appointments: 0, // Não implementado ainda
-          appointments_this_month: 0, // Não implementado ainda
-        });
+        setStats(newStats);
       }
     } catch (error: any) {
       console.error('Error fetching system stats:', error);
@@ -259,7 +291,7 @@ const AdminReportsTab = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="reportType">Tipo de Relatório</Label>
-              <Select value={reportType} onValueChange={setReportType}>
+              <Select value={reportType} onValueChange={(value: ReportType) => setReportType(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -274,7 +306,7 @@ const AdminReportsTab = () => {
 
             <div>
               <Label htmlFor="dateRange">Período</Label>
-              <Select value={dateRange} onValueChange={setDateRange}>
+              <Select value={dateRange} onValueChange={(value: DateRange) => setDateRange(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -296,6 +328,7 @@ const AdminReportsTab = () => {
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
+                    max={endDate || undefined}
                   />
                 </div>
                 <div>
@@ -304,6 +337,8 @@ const AdminReportsTab = () => {
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
+                    min={startDate || undefined}
+                    max={new Date().toISOString().split('T')[0]}
                   />
                 </div>
               </>

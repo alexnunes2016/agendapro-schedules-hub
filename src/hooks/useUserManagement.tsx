@@ -1,10 +1,26 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/auth';
 import { useAuth } from './useAuth';
 import { PermissionManager } from '@/utils/permissions';
 import { useToast } from './use-toast';
+
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: "user" | "admin";
+  plan: "free" | "basico" | "profissional" | "premium";
+  is_active: boolean;
+  email_confirmed: boolean;
+  plan_expires_at?: string;
+  organization_id?: string;
+  clinic_name?: string;
+  service_type?: string;
+  created_at: string;
+  updated_at: string;
+  plan_updated_by?: string;
+}
 
 export const useUserManagement = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -87,18 +103,37 @@ export const useUserManagement = () => {
     }
   };
 
-  const updateUserPlan = async (userId: string, plan: string) => {
+  const updateUserPlan = async (userId: string, plan: UserProfile['plan']) => {
     try {
+      // Primeiro, verificar se o plano é válido
+      const validPlans: UserProfile['plan'][] = ['free', 'basico', 'profissional', 'premium'];
+      if (!validPlans.includes(plan)) {
+        throw new Error('Plano inválido');
+      }
+
+      // Atualizar no Supabase
       const { error } = await supabase
         .from('profiles')
-        .update({ plan: plan as UserProfile['plan'] })
+        .update({ 
+          plan: plan,
+          updated_at: new Date().toISOString(),
+          plan_updated_by: profile?.id
+        })
         .eq('id', userId);
 
       if (error) throw error;
 
+      // Atualizar o estado local
       setUsers(prevUsers =>
         prevUsers.map(user =>
-          user.id === userId ? { ...user, plan: plan as UserProfile['plan'] } : user
+          user.id === userId 
+            ? { 
+                ...user, 
+                plan: plan,
+                updated_at: new Date().toISOString(),
+                plan_updated_by: profile?.id
+              } 
+            : user
         )
       );
       
@@ -106,12 +141,18 @@ export const useUserManagement = () => {
         title: "Plano atualizado",
         description: "Plano do usuário atualizado com sucesso",
       });
+
+      // Recarregar os dados para garantir sincronização
+      await fetchUsers();
     } catch (err: any) {
+      console.error('Error updating user plan:', err);
       toast({
         title: "Erro ao atualizar plano",
-        description: err.message,
+        description: err.message || "Erro ao atualizar plano do usuário",
         variant: "destructive",
       });
+      // Recarregar os dados em caso de erro para garantir consistência
+      await fetchUsers();
     }
   };
 
