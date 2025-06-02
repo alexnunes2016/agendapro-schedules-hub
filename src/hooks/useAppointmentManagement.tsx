@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,6 +20,7 @@ export const useAppointmentManagement = () => {
   // Fixed admin checks to use profile directly instead of async calls
   const isAdmin = PermissionManager.isAdminSync(profile);
   const isSuperAdmin = PermissionManager.isSuperAdminSync(profile);
+  const canViewAllAppointments = PermissionManager.canViewAllAppointments(profile);
 
   useEffect(() => {
     if (!authLoading && !user) {

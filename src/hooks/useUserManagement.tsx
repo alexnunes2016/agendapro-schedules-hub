@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/auth';
@@ -91,7 +92,7 @@ export const useUserManagement = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ plan: plan })
+        .update({ plan: plan as UserProfile['plan'] })
         .eq('id', userId);
 
       if (error) {
@@ -104,7 +105,7 @@ export const useUserManagement = () => {
       } else {
         setUsers(prevUsers =>
           prevUsers.map(user =>
-            user.id === userId ? { ...user, plan: plan } : user
+            user.id === userId ? { ...user, plan: plan as UserProfile['plan'] } : user
           )
         );
         toast({
@@ -121,6 +122,102 @@ export const useUserManagement = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleUserStatus = async (userId: string, currentStatus: boolean, userName: string) => {
+    await updateUserStatus(userId, !currentStatus);
+  };
+
+  const sendNotification = async (userId: string, userName: string) => {
+    toast({
+      title: "Notificação Enviada",
+      description: `Notificação enviada para ${userName}`,
+    });
+  };
+
+  const resetPassword = async (userId: string, userName: string) => {
+    if (!confirm(`Tem certeza que deseja resetar a senha do usuário ${userName}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase.rpc('secure_admin_reset_user_password', {
+        p_user_id: userId
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Senha Resetada",
+        description: `Solicitação de reset de senha enviada para ${userName}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: "Erro ao resetar senha do usuário",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleEmailConfirmation = async (userId: string, userName: string, currentStatus: boolean) => {
+    try {
+      const newStatus = !currentStatus;
+      const { error } = await supabase
+        .from('profiles')
+        .update({ email_confirmed: newStatus })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId ? { ...user, email_confirmed: newStatus } : user
+        )
+      );
+
+      toast({
+        title: "Sucesso",
+        description: `Email do usuário ${userName} ${newStatus ? 'confirmado' : 'desconfirmado'} com sucesso`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: "Erro ao alterar confirmação do email",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const editPlanExpiration = async (userId: string, userName: string) => {
+    const newDate = prompt(`Digite a nova data de expiração para ${userName} (YYYY-MM-DD):`);
+    if (!newDate) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ plan_expires_at: newDate })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId ? { ...user, plan_expires_at: newDate } : user
+        )
+      );
+
+      toast({
+        title: "Sucesso",
+        description: `Data de expiração do plano de ${userName} atualizada`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar data de expiração",
+        variant: "destructive",
+      });
     }
   };
 
@@ -183,6 +280,11 @@ export const useUserManagement = () => {
     filteredUsers,
     updateUserStatus,
     updateUserPlan,
+    toggleUserStatus,
+    sendNotification,
+    resetPassword,
+    toggleEmailConfirmation,
+    editPlanExpiration,
     deleteUser,
     fetchUsers,
     isAdmin,

@@ -16,61 +16,58 @@ interface FileUploadComponentProps {
 const FileUploadComponent = ({ recordId, onFileUploaded }: FileUploadComponentProps) => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
   const uploadFiles = async () => {
-    if (selectedFiles.length === 0 || !user) return;
+    if (!selectedFile || !user) return;
 
     setUploading(true);
     setUploadProgress(0);
 
     try {
-      for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i];
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${user.id}/${recordId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${user.id}/${recordId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
-        // Upload to storage with enhanced security
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('medical-files')
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
+      // Upload to storage with enhanced security
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('medical-files')
+        .upload(fileName, selectedFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-        if (uploadError) {
-          throw uploadError;
-        }
-
-        // Save file record to database with validation
-        const { error: dbError } = await supabase
-          .from('medical_record_files')
-          .insert({
-            medical_record_id: recordId,
-            file_name: file.name,
-            file_size: file.size,
-            file_type: file.type,
-            file_url: fileName,
-            uploaded_by: user.id,
-          });
-
-        if (dbError) {
-          // If DB insert fails, clean up the uploaded file
-          await supabase.storage.from('medical-files').remove([fileName]);
-          throw dbError;
-        }
-
-        setUploadProgress(((i + 1) / selectedFiles.length) * 100);
+      if (uploadError) {
+        throw uploadError;
       }
+
+      // Save file record to database with validation
+      const { error: dbError } = await supabase
+        .from('medical_record_files')
+        .insert({
+          medical_record_id: recordId,
+          file_name: selectedFile.name,
+          file_size: selectedFile.size,
+          file_type: selectedFile.type,
+          file_url: fileName,
+          uploaded_by: user.id,
+        });
+
+      if (dbError) {
+        // If DB insert fails, clean up the uploaded file
+        await supabase.storage.from('medical-files').remove([fileName]);
+        throw dbError;
+      }
+
+      setUploadProgress(100);
 
       toast({
         title: "Sucesso",
-        description: `${selectedFiles.length} arquivo(s) enviado(s) com sucesso`,
+        description: "Arquivo enviado com sucesso",
       });
 
-      setSelectedFiles([]);
+      setSelectedFile(null);
       onFileUploaded();
 
     } catch (error: any) {
@@ -86,13 +83,18 @@ const FileUploadComponent = ({ recordId, onFileUploaded }: FileUploadComponentPr
     }
   };
 
+  const handleFileRemove = () => {
+    setSelectedFile(null);
+  };
+
   return (
     <div className="space-y-4">
       <SecureFileUpload
-        onFileSelect={setSelectedFiles}
-        maxFileSize={2 * 1024 * 1024} // 2MB
-        allowedTypes={['application/pdf', 'image/png', 'image/jpeg', 'image/jpg']}
-        maxFiles={5}
+        onFileSelect={setSelectedFile}
+        onFileRemove={handleFileRemove}
+        selectedFile={selectedFile}
+        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+        maxSize={2}
       />
       
       {uploading && (
@@ -104,13 +106,13 @@ const FileUploadComponent = ({ recordId, onFileUploaded }: FileUploadComponentPr
         </div>
       )}
       
-      {selectedFiles.length > 0 && !uploading && (
+      {selectedFile && !uploading && (
         <Button 
           onClick={uploadFiles} 
           disabled={uploading}
           className="w-full"
         >
-          Enviar Arquivos
+          Enviar Arquivo
         </Button>
       )}
     </div>
