@@ -23,7 +23,7 @@ const Header = () => {
             <Link to="/precos" className="text-gray-600 hover:text-blue-600 transition-colors text-sm lg:text-base">
               Preços
             </Link>
-            <Link to="/demonstração" className="text-gray-600 hover:text-blue-600 transition-colors text-sm lg:text-base">
+            <Link to="/demonstracao" className="text-gray-600 hover:text-blue-600 transition-colors text-sm lg:text-base">
               Demonstração
             </Link>
           </nav>
@@ -67,7 +67,7 @@ const Header = () => {
                 Preços
               </Link>
               <Link 
-                to="/demonstração" 
+                to="/demonstracao" 
                 className="text-gray-600 hover:text-blue-600 transition-colors py-2 px-2 rounded hover:bg-gray-50"
                 onClick={() => setIsMenuOpen(false)}
               >

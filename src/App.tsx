@@ -1,4 +1,3 @@
-
 import React, { Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
@@ -48,7 +47,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/funcionalidades" element={<Features />} />
               <Route path="/precos" element={<Pricing />} />
-              <Route path="/demonstração" element={<Demo />} />
+              <Route path="/demonstracao" element={<Demo />} />
               <Route path="/dashboard" element={<LazyDashboard />} />
               <Route path="/appointments" element={<LazyAppointments />} />
               <Route path="/booking/:userId" element={<BookingPublic />} />
