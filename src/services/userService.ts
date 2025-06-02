@@ -1,21 +1,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { AppError } from "@/utils/errorHandler";
-
-interface UserData {
-  id: string;
-  name: string;
-  email: string;
-  plan: string;
-  role: string;
-  is_active: boolean;
-  email_confirmed: boolean;
-  plan_expires_at?: string;
-  organization_id?: string;
-}
+import { UserProfile } from "@/types/auth";
 
 export const userService = {
-  async fetchUsers(): Promise<UserData[]> {
+  async fetchUsers(): Promise<UserProfile[]> {
     console.log('Fetching users...');
     
     try {
@@ -201,7 +190,7 @@ export const userService = {
     }
   },
 
-  async validateUserPermissions(userId: string, requiredRole: string = 'user'): Promise<boolean> {
+  async validateUserPermissions(userId: string, requiredLevel: 'user' | 'admin' | 'super_admin'): Promise<boolean> {
     if (!userId) {
       throw new AppError('ID do usuário é obrigatório', 'VALIDATION_ERROR');
     }
@@ -229,19 +218,10 @@ export const userService = {
       const isSuperAdmin = userRole === 'admin' && userEmail === 'suporte@judahtech.com.br';
       
       // Hierarquia de permissões
-      if (isSuperAdmin) {
-        return true; // Super admin tem acesso a tudo
-      }
+      const hierarchy = { user: 1, admin: 2, super_admin: 3 };
+      const userLevel = isSuperAdmin ? 'super_admin' : userRole || 'user';
       
-      if (userRole === 'admin' && (requiredRole === 'admin' || requiredRole === 'user')) {
-        return true; // Admin tem acesso a admin e user
-      }
-      
-      if (userRole === 'user' && requiredRole === 'user') {
-        return true; // User tem acesso apenas a user
-      }
-
-      return false;
+      return hierarchy[userLevel as keyof typeof hierarchy] >= hierarchy[requiredLevel];
     } catch (error: any) {
       console.error('Error in validateUserPermissions:', error);
       if (error instanceof AppError) {

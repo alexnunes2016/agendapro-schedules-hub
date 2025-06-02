@@ -2,15 +2,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useAdminCheck } from "@/hooks/useAdminCheck";
-import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { PermissionManager } from "@/utils/permissions";
 
 export const useAppointmentManagement = () => {
-  const { user, loading: authLoading } = useAuth();
-  const { isAdmin } = useAdminCheck();
-  const { isSuperAdmin } = useSuperAdminCheck();
+  const { user, profile, loading: authLoading } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [services, setServices] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,6 +16,10 @@ export const useAppointmentManagement = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const isAdmin = PermissionManager.isAdmin(profile);
+  const isSuperAdmin = PermissionManager.isSuperAdmin(profile);
+  const canViewAllAppointments = PermissionManager.canViewAllAppointments(profile);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -33,7 +34,7 @@ export const useAppointmentManagement = () => {
       setLoading(true);
       setError(null);
       
-      let query = (supabase as any)
+      let query = supabase
         .from('appointments')
         .select(`
           *,
@@ -47,7 +48,7 @@ export const useAppointmentManagement = () => {
         .order('appointment_time', { ascending: true });
 
       // Se não for admin ou super admin, filtrar apenas pelos agendamentos do usuário
-      if (!isAdmin && !isSuperAdmin) {
+      if (!canViewAllAppointments) {
         query = query.eq('user_id', user.id);
       }
 
@@ -66,19 +67,19 @@ export const useAppointmentManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, isAdmin, isSuperAdmin, toast]);
+  }, [user, canViewAllAppointments, toast]);
 
   const fetchServices = useCallback(async () => {
     if (!user) return;
 
     try {
-      let query = (supabase as any)
+      let query = supabase
         .from('services')
         .select('*')
         .eq('is_active', true);
 
       // Se não for admin ou super admin, filtrar apenas pelos serviços do usuário
-      if (!isAdmin && !isSuperAdmin) {
+      if (!canViewAllAppointments) {
         query = query.eq('user_id', user.id);
       }
 
@@ -89,7 +90,7 @@ export const useAppointmentManagement = () => {
     } catch (error: any) {
       console.error('Error fetching services:', error);
     }
-  }, [user, isAdmin, isSuperAdmin]);
+  }, [user, canViewAllAppointments]);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -109,13 +110,13 @@ export const useAppointmentManagement = () => {
     }
 
     try {
-      let query = (supabase as any)
+      let query = supabase
         .from('appointments')
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', appointmentId);
 
       // Se não for admin ou super admin, adicionar filtro do usuário
-      if (!isAdmin && !isSuperAdmin) {
+      if (!canViewAllAppointments) {
         query = query.eq('user_id', user?.id);
       }
 
@@ -137,7 +138,7 @@ export const useAppointmentManagement = () => {
         variant: "destructive",
       });
     }
-  }, [isAdmin, isSuperAdmin, user?.id, fetchAppointments, toast]);
+  }, [canViewAllAppointments, user?.id, fetchAppointments, toast]);
 
   const deleteAppointment = useCallback(async (appointmentId: string) => {
     if (!appointmentId) {
@@ -154,13 +155,13 @@ export const useAppointmentManagement = () => {
     }
 
     try {
-      let query = (supabase as any)
+      let query = supabase
         .from('appointments')
         .delete()
         .eq('id', appointmentId);
 
       // Se não for admin ou super admin, adicionar filtro do usuário
-      if (!isAdmin && !isSuperAdmin) {
+      if (!canViewAllAppointments) {
         query = query.eq('user_id', user?.id);
       }
 
@@ -182,7 +183,7 @@ export const useAppointmentManagement = () => {
         variant: "destructive",
       });
     }
-  }, [isAdmin, isSuperAdmin, user?.id, fetchAppointments, toast]);
+  }, [canViewAllAppointments, user?.id, fetchAppointments, toast]);
 
   const filteredAppointments = appointments.filter((appointment: any) => {
     const matchesSearch = appointment.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||

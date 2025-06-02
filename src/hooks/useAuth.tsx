@@ -3,16 +3,8 @@ import { useState, useEffect, createContext, useContext, useCallback } from 'rea
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { useErrorHandler } from '@/utils/errorHandler';
-
-interface AuthContextType {
-  user: User | null;
-  profile: any | null;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error?: any }>;
-  signUp: (email: string, password: string, userData: any) => Promise<{ error?: any }>;
-  signOut: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
-}
+import { AuthContextType, UserProfile } from '@/types/auth';
+import { PermissionManager } from '@/utils/permissions';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -20,7 +12,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   console.log('AuthProvider mounting...');
   
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<any | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const { handleError } = useErrorHandler();
 
@@ -35,7 +27,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (!error && data) {
         console.log('Profile fetched:', data);
-        setProfile(data);
+        setProfile(data as UserProfile);
       } else if (error) {
         console.error('Error fetching profile:', error);
         handleError(error, 'fetchProfile');
@@ -154,6 +146,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [handleError]);
 
+  const isAuthenticated = Boolean(user && profile);
+  const isSuperAdmin = PermissionManager.isSuperAdmin(profile);
+  const isAdmin = PermissionManager.isAdmin(profile);
+
   console.log('AuthProvider rendering with loading:', loading, 'user:', !!user);
 
   return (
@@ -165,6 +161,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       signUp,
       signOut,
       refreshProfile,
+      isAuthenticated,
+      isSuperAdmin,
+      isAdmin,
     }}>
       {children}
     </AuthContext.Provider>
