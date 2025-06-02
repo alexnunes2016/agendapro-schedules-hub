@@ -13,8 +13,19 @@ const BookingProgress = ({ currentStep, totalSteps }: BookingProgressProps) => {
   ];
 
   return (
-    <div className="mb-8">
-      <div className="flex justify-between items-center mb-4">
+    <div className="mb-6 sm:mb-8">
+      {/* Mobile Progress - Simplified */}
+      <div className="flex justify-between items-center mb-4 sm:hidden">
+        <span className="text-sm font-medium text-gray-600">
+          Passo {currentStep} de {totalSteps}
+        </span>
+        <span className="text-sm text-blue-600">
+          {steps[currentStep - 1]?.label}
+        </span>
+      </div>
+
+      {/* Desktop Progress - Full */}
+      <div className="hidden sm:flex justify-between items-center mb-4">
         {steps.map((step) => (
           <span 
             key={step.number}
@@ -29,6 +40,8 @@ const BookingProgress = ({ currentStep, totalSteps }: BookingProgressProps) => {
           </span>
         ))}
       </div>
+
+      {/* Progress Bar */}
       <div className="w-full bg-gray-200 rounded-full h-2">
         <div 
           className="bg-blue-600 h-2 rounded-full transition-all duration-300"

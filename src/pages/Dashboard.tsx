@@ -74,8 +74,11 @@ const Dashboard = () => {
   // Show loading while auth is loading
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-lg">Carregando...</div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="text-base sm:text-lg">Carregando...</div>
+        </div>
       </div>
     );
   }
@@ -94,7 +97,7 @@ const Dashboard = () => {
         handleLogout={handleLogout}
       />
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <DashboardWelcome profileName={profile.name} />
         <DashboardStatsCards profile={profile} />
         <DashboardQuickActions profile={profile} />

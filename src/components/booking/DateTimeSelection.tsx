@@ -25,49 +25,49 @@ const DateTimeSelection = ({
   onBack 
 }: DateTimeSelectionProps) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <Calendar className="h-5 w-5 mr-2" />
+    <Card className="mx-4 sm:mx-0">
+      <CardHeader className="pb-4 sm:pb-6">
+        <CardTitle className="flex items-center text-lg sm:text-xl">
+          <Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
           Escolha data e horário
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm sm:text-base">
           Selecione quando deseja ser atendido
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 sm:space-y-6">
         <div>
-          <Label htmlFor="date">Data</Label>
+          <Label htmlFor="date" className="text-sm sm:text-base">Data</Label>
           <Input
             id="date"
             type="date"
             value={selectedDate}
             onChange={(e) => onDateChange(e.target.value)}
             min={new Date().toISOString().split('T')[0]}
-            className="mt-1"
+            className="mt-1 h-11 sm:h-12 text-sm sm:text-base"
           />
         </div>
 
         {selectedDate && (
           <div>
-            <Label>Horários disponíveis</Label>
+            <Label className="text-sm sm:text-base">Horários disponíveis</Label>
             {availableSlots.length === 0 ? (
-              <div className="mt-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="mt-2 p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-yellow-600" />
-                  <p className="text-sm text-yellow-800">
+                  <Clock className="h-4 w-4 text-yellow-600 flex-shrink-0" />
+                  <p className="text-xs sm:text-sm text-yellow-800">
                     Não há horários disponíveis para esta data. Por favor, escolha outra data.
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-3 mt-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mt-2">
                 {availableSlots.map((slot) => (
                   <Button
                     key={slot}
                     variant={selectedTime === slot ? "default" : "outline"}
                     onClick={() => onTimeSelect(slot)}
-                    className="text-sm"
+                    className="text-xs sm:text-sm h-9 sm:h-10"
                   >
                     {slot}
                   </Button>
@@ -77,14 +77,18 @@ const DateTimeSelection = ({
           </div>
         )}
 
-        <div className="flex space-x-3 pt-4">
-          <Button variant="outline" onClick={onBack} className="flex-1">
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <Button 
+            variant="outline" 
+            onClick={onBack} 
+            className="w-full sm:flex-1 h-11 sm:h-12 text-sm sm:text-base"
+          >
             Voltar
           </Button>
           <Button 
             onClick={onNext}
             disabled={!selectedDate || !selectedTime || availableSlots.length === 0}
-            className="flex-1"
+            className="w-full sm:flex-1 h-11 sm:h-12 text-sm sm:text-base"
           >
             Continuar
           </Button>

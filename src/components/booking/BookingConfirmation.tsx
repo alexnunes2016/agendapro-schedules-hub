@@ -34,22 +34,22 @@ const BookingConfirmation = ({
   onNewBooking 
 }: BookingConfirmationProps) => {
   return (
-    <Card className="text-center">
-      <CardHeader>
-        <div className="flex justify-center mb-4">
-          <CheckCircle className="h-16 w-16 text-green-600" />
+    <Card className="text-center mx-4 sm:mx-0">
+      <CardHeader className="pb-4 sm:pb-6">
+        <div className="flex justify-center mb-3 sm:mb-4">
+          <CheckCircle className="h-12 w-12 sm:h-16 sm:w-16 text-green-600" />
         </div>
-        <CardTitle className="text-2xl text-green-600">
+        <CardTitle className="text-xl sm:text-2xl text-green-600">
           Agendamento Confirmado!
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm sm:text-base">
           Seu agendamento foi realizado com sucesso
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="bg-gray-50 p-6 rounded-lg text-left">
-          <h3 className="font-semibold mb-4">Detalhes do agendamento:</h3>
-          <div className="space-y-2 text-sm">
+      <CardContent className="space-y-4 sm:space-y-6">
+        <div className="bg-gray-50 p-4 sm:p-6 rounded-lg text-left">
+          <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Detalhes do agendamento:</h3>
+          <div className="space-y-2 text-xs sm:text-sm">
             <p><strong>Serviço:</strong> {selectedService?.name}</p>
             <p><strong>Data:</strong> {new Date(bookingData.date).toLocaleDateString('pt-BR')}</p>
             <p><strong>Horário:</strong> {bookingData.time}</p>
@@ -60,14 +60,17 @@ const BookingConfirmation = ({
           </div>
         </div>
 
-        <div className="text-sm text-gray-600">
+        <div className="text-xs sm:text-sm text-gray-600 px-2">
           <p>Um e-mail de confirmação foi enviado para <strong>{bookingData.clientEmail}</strong></p>
           <p className="mt-2">
             Em caso de dúvidas ou necessidade de reagendamento, entre em contato conosco.
           </p>
         </div>
 
-        <Button onClick={onNewBooking} className="mt-6">
+        <Button 
+          onClick={onNewBooking} 
+          className="mt-4 sm:mt-6 w-full h-11 sm:h-12 text-sm sm:text-base"
+        >
           Fazer novo agendamento
         </Button>
       </CardContent>

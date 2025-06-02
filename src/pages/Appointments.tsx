@@ -24,8 +24,11 @@ const Appointments = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-lg">Carregando...</div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="text-base sm:text-lg">Carregando...</div>
+        </div>
       </div>
     );
   }
@@ -38,7 +41,7 @@ const Appointments = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <AppointmentHeader onAppointmentCreated={fetchAppointments} />
 
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-4 sm:p-6">
         <AppointmentFilters
           searchTerm={searchTerm}
           statusFilter={statusFilter}

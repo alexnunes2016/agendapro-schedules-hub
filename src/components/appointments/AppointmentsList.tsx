@@ -24,13 +24,13 @@ export const AppointmentsList = ({
 }: AppointmentsListProps) => {
   if (filteredAppointments.length === 0) {
     return (
-      <Card className="text-center py-12">
-        <CardContent>
-          <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">
+      <Card className="text-center py-8 sm:py-12 mx-4 sm:mx-0">
+        <CardContent className="px-4">
+          <Calendar className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-base sm:text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">
             Nenhum agendamento encontrado
           </h3>
-          <p className="text-gray-500 dark:text-gray-500">
+          <p className="text-sm sm:text-base text-gray-500 dark:text-gray-500">
             {searchTerm || statusFilter !== "all" 
               ? "Tente ajustar os filtros de busca" 
               : "Você ainda não possui agendamentos"}
@@ -41,7 +41,7 @@ export const AppointmentsList = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4 px-4 sm:px-0">
       {filteredAppointments.map((appointment: any) => (
         <AppointmentCard
           key={appointment.id}
