@@ -1,10 +1,9 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
 
-const Pricing = () => {
+const PricingSection = () => {
   const plans = [
     {
       name: "Gratuito",
@@ -132,4 +131,4 @@ const Pricing = () => {
   );
 };
 
-export default Pricing;
+export default PricingSection;

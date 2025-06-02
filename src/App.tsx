@@ -15,7 +15,7 @@ import OrganizationUsers from "./pages/OrganizationUsers";
 import CalendarSettings from "./pages/CalendarSettings";
 import NotificationSettings from "./pages/NotificationSettings";
 import Features from "./pages/Features";
-import Pricing from "./pages/Pricing";
+import PricingPage from "./pages/Pricing";
 import Demo from "./pages/Demo";
 import Reports from "./pages/Reports";
 
@@ -46,7 +46,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/funcionalidades" element={<Features />} />
-              <Route path="/precos" element={<Pricing />} />
+              <Route path="/precos" element={<PricingPage />} />
               <Route path="/demonstracao" element={<Demo />} />
               <Route path="/dashboard" element={<LazyDashboard />} />
               <Route path="/appointments" element={<LazyAppointments />} />
