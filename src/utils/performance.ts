@@ -1,5 +1,5 @@
 
-import { useMemo, useCallback, lazy } from 'react';
+import { useMemo, useCallback, lazy, useState, useEffect } from 'react';
 
 // Lazy load pages for better performance
 export const LazyDashboard = lazy(() => import('@/pages/Dashboard'));
@@ -12,7 +12,7 @@ export const LazySystemSettings = lazy(() => import('@/pages/SystemSettings'));
 export const LazySettings = lazy(() => import('@/pages/Settings'));
 
 // Debounce hook for search and input optimization
-export const useDebounce = <T>(value: T, delay: number): T => {
+export const useDebounce = <T,>(value: T, delay: number): T => {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {

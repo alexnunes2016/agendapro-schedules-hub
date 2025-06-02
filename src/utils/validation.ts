@@ -75,7 +75,7 @@ export const medicalRecordFormSchema = z.object({
 });
 
 // Validation utilities
-export const validateInput = <T>(schema: z.ZodSchema<T>, data: unknown): { success: boolean; data?: T; errors?: string[] } => {
+export const validateInput = <T,>(schema: z.ZodSchema<T>, data: unknown): { success: boolean; data?: T; errors?: string[] } => {
   try {
     const validatedData = schema.parse(data);
     return { success: true, data: validatedData };
