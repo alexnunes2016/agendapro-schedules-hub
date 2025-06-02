@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Download, FileText, Users, Calendar, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import jsPDF from "jspdf";
+import { jsPDF as JsPDF } from "jspdf";
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
@@ -84,7 +84,7 @@ const AdminReportsTab = () => {
     if (!stats) return;
 
     try {
-      const doc = new jsPDF();
+      const doc = new JsPDF();
       
       // Adicionar título
       doc.setFontSize(16);
