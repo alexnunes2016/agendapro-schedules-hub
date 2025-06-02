@@ -1,8 +1,10 @@
 
+import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import UserActions from "./UserActions";
 import UserPlanSelect from "./UserPlanSelect";
+import EditUserModal from "./EditUserModal";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 
@@ -12,6 +14,9 @@ interface UserManagementTableProps {
 
 export const UserManagementTable = ({ filteredUsers }: UserManagementTableProps) => {
   const { isSuperAdmin } = useSuperAdminCheck();
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  
   const {
     users,
     loading,
@@ -22,6 +27,7 @@ export const UserManagementTable = ({ filteredUsers }: UserManagementTableProps)
     toggleEmailConfirmation,
     editPlanExpiration,
     deleteUser,
+    fetchUsers,
   } = useUserManagement();
 
   // Use filteredUsers if provided, otherwise use all users
@@ -53,6 +59,14 @@ export const UserManagementTable = ({ filteredUsers }: UserManagementTableProps)
         {plan === 'free' ? '14 dias teste' : plan}
       </Badge>
     );
+  };
+
+  const handleEditUser = (userId: string, userName: string) => {
+    const user = displayUsers.find(u => u.id === userId);
+    if (user) {
+      setSelectedUser(user);
+      setEditModalOpen(true);
+    }
   };
 
   if (loading) {
@@ -114,6 +128,7 @@ export const UserManagementTable = ({ filteredUsers }: UserManagementTableProps)
                   onDeleteUser={(userId, userName) =>
                     deleteUser(userId, userName, isSuperAdmin)
                   }
+                  onEditUser={handleEditUser}
                   isSuperAdmin={isSuperAdmin}
                 />
               </TableCell>
@@ -121,6 +136,13 @@ export const UserManagementTable = ({ filteredUsers }: UserManagementTableProps)
           ))}
         </TableBody>
       </Table>
+
+      <EditUserModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        user={selectedUser}
+        onSuccess={fetchUsers}
+      />
     </div>
   );
 };
