@@ -143,7 +143,7 @@ const Demo = () => {
                     Começar Agora - Grátis
                   </Button>
                 </Link>
-                <Link to="/upgrade">
+                <Link to="/pricing">
                   <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-blue-600">
                     Ver Planos
                   </Button>

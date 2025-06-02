@@ -24,8 +24,8 @@ const Header = () => {
             <Link to="/pricing" className="text-gray-600 hover:text-blue-600 transition-colors">
               Preços
             </Link>
-            <Link to="/demo" className="text-gray-600 hover:text-blue-600 transition-colors">
-              Demo
+            <Link to="/demonstração" className="text-gray-600 hover:text-blue-600 transition-colors">
+              Demonstração
             </Link>
           </nav>
 
@@ -67,11 +67,11 @@ const Header = () => {
                 Preços
               </Link>
               <Link 
-                to="/demo" 
+                to="/demonstração" 
                 className="text-gray-600 hover:text-blue-600 transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Demo
+                Demonstração
               </Link>
               <div className="flex flex-col space-y-2 pt-4 border-t">
                 <Link to="/login" onClick={() => setIsMenuOpen(false)}>

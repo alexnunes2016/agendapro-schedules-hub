@@ -294,7 +294,7 @@ const Features = () => {
                 Começar Teste Grátis
               </Button>
             </Link>
-            <Link to="/demo">
+            <Link to="/demonstração">
               <Button size="lg" variant="outline">
                 Ver Demonstração
               </Button>

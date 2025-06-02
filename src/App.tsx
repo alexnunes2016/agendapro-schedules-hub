@@ -15,6 +15,9 @@ import Upgrade from "./pages/Upgrade";
 import OrganizationUsers from "./pages/OrganizationUsers";
 import CalendarSettings from "./pages/CalendarSettings";
 import NotificationSettings from "./pages/NotificationSettings";
+import Features from "./pages/Features";
+import Pricing from "./pages/Pricing";
+import Demo from "./pages/Demo";
 
 // Lazy loaded pages
 import { 
@@ -42,6 +45,9 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/features" element={<Features />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/demonstração" element={<Demo />} />
               <Route path="/dashboard" element={<LazyDashboard />} />
               <Route path="/appointments" element={<LazyAppointments />} />
               <Route path="/booking/:userId" element={<BookingPublic />} />
