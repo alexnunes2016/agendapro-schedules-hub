@@ -1,65 +1,53 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from './useAuth';
+import { useToast } from './use-toast';
 
-export interface Professional {
+interface Professional {
   id: string;
   user_id: string;
-  organization_id: string | null;
+  organization_id?: string;
   name: string;
   email: string;
-  phone: string | null;
+  phone?: string;
   role: string;
-  specialization: string | null;
+  specialization?: string;
   is_active: boolean;
+  calendar_id?: string;
   created_by: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface CreateProfessionalData {
-  user_id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  role?: string;
-  specialization?: string;
-  organization_id?: string;
-}
-
 export const useProfessionals = () => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
   const { user } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (user) {
+      fetchProfessionals();
+    }
+  }, [user]);
 
   const fetchProfessionals = async () => {
-    if (!user) return;
-    
     try {
       setLoading(true);
-      console.log('Fetching professionals for user:', user.id);
-      
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('professionals')
         .select('*')
-        .eq('created_by', user.id)
+        .eq('created_by', user?.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching professionals:', error);
-        throw error;
-      }
-
-      console.log('Professionals fetched:', data);
+      if (error) throw error;
       setProfessionals(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching professionals:', error);
       toast({
         title: "Erro ao carregar profissionais",
-        description: "Não foi possível carregar os profissionais.",
+        description: error.message,
         variant: "destructive",
       });
     } finally {
@@ -67,173 +55,187 @@ export const useProfessionals = () => {
     }
   };
 
-  const createProfessional = async (data: CreateProfessionalData) => {
-    if (!user) return false;
-
+  const createProfessional = async (professionalData: {
+    name: string;
+    email: string;
+    phone?: string;
+    specialization?: string;
+  }) => {
     try {
-      console.log('Creating professional:', data);
-      
-      const { error } = await (supabase as any)
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // Primeiro, criar a agenda para o profissional
+      const { data: calendarData, error: calendarError } = await supabase
+        .from('calendars')
+        .insert({
+          name: `Agenda - ${professionalData.name}`,
+          description: `Agenda do profissional ${professionalData.name}`,
+          user_id: user.id,
+          color: '#3B82F6',
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (calendarError) throw calendarError;
+
+      // Agora criar o profissional com referência à agenda
+      const { data: professionalInsert, error: professionalError } = await supabase
         .from('professionals')
         .insert({
-          ...data,
+          ...professionalData,
+          user_id: user.id,
+          calendar_id: calendarData.id,
           created_by: user.id,
-        });
+          role: 'professional'
+        })
+        .select()
+        .single();
 
-      if (error) {
-        console.error('Error creating professional:', error);
-        throw error;
+      if (professionalError) {
+        // Se falhou, remover a agenda criada
+        await supabase.from('calendars').delete().eq('id', calendarData.id);
+        throw professionalError;
       }
 
+      // Criar horários padrão para a agenda
+      const defaultSchedules = [
+        { day_of_week: 1, start_time: '08:00', end_time: '12:00' }, // Segunda
+        { day_of_week: 1, start_time: '14:00', end_time: '18:00' },
+        { day_of_week: 2, start_time: '08:00', end_time: '12:00' }, // Terça
+        { day_of_week: 2, start_time: '14:00', end_time: '18:00' },
+        { day_of_week: 3, start_time: '08:00', end_time: '12:00' }, // Quarta
+        { day_of_week: 3, start_time: '14:00', end_time: '18:00' },
+        { day_of_week: 4, start_time: '08:00', end_time: '12:00' }, // Quinta
+        { day_of_week: 4, start_time: '14:00', end_time: '18:00' },
+        { day_of_week: 5, start_time: '08:00', end_time: '12:00' }, // Sexta
+        { day_of_week: 5, start_time: '14:00', end_time: '18:00' },
+      ];
+
+      const scheduleInserts = defaultSchedules.map(schedule => ({
+        ...schedule,
+        calendar_id: calendarData.id
+      }));
+
+      await supabase.from('calendar_schedules').insert(scheduleInserts);
+
+      setProfessionals(prev => [professionalInsert, ...prev]);
+      
       toast({
-        title: "Profissional criado",
-        description: `Profissional "${data.name}" foi criado com sucesso.`,
+        title: "Profissional criado com sucesso",
+        description: `${professionalData.name} foi adicionado com agenda própria`,
       });
 
-      await fetchProfessionals();
-      return true;
-    } catch (error) {
+      return professionalInsert;
+    } catch (error: any) {
       console.error('Error creating professional:', error);
       toast({
         title: "Erro ao criar profissional",
-        description: "Não foi possível criar o profissional. Tente novamente.",
+        description: error.message,
         variant: "destructive",
       });
-      return false;
+      throw error;
     }
   };
 
-  const updateProfessional = async (id: string, data: Partial<CreateProfessionalData>) => {
-    if (!user) return false;
-
+  const updateProfessional = async (id: string, updates: Partial<Professional>) => {
     try {
-      console.log('Updating professional:', id, data);
-      
-      const { error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('professionals')
-        .update({
-          ...data,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updates)
         .eq('id', id)
-        .eq('created_by', user.id);
+        .eq('created_by', user?.id)
+        .select()
+        .single();
 
-      if (error) {
-        console.error('Error updating professional:', error);
-        throw error;
-      }
+      if (error) throw error;
+
+      setProfessionals(prev => 
+        prev.map(prof => prof.id === id ? { ...prof, ...updates } : prof)
+      );
 
       toast({
         title: "Profissional atualizado",
-        description: "Profissional foi atualizado com sucesso.",
+        description: "Dados do profissional atualizados com sucesso",
       });
 
-      await fetchProfessionals();
-      return true;
-    } catch (error) {
+      return data;
+    } catch (error: any) {
       console.error('Error updating professional:', error);
       toast({
         title: "Erro ao atualizar profissional",
-        description: "Não foi possível atualizar o profissional. Tente novamente.",
+        description: error.message,
         variant: "destructive",
       });
-      return false;
-    }
-  };
-
-  const toggleProfessionalStatus = async (id: string, isActive: boolean) => {
-    if (!user) return false;
-
-    try {
-      console.log('Toggling professional status:', id, isActive);
-      
-      const { error } = await (supabase as any)
-        .from('professionals')
-        .update({
-          is_active: !isActive,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .eq('created_by', user.id);
-
-      if (error) {
-        console.error('Error toggling professional status:', error);
-        throw error;
-      }
-
-      toast({
-        title: isActive ? "Profissional desativado" : "Profissional ativado",
-        description: `Profissional foi ${isActive ? 'desativado' : 'ativado'} com sucesso.`,
-      });
-
-      await fetchProfessionals();
-      return true;
-    } catch (error) {
-      console.error('Error toggling professional status:', error);
-      toast({
-        title: "Erro ao alterar status",
-        description: "Não foi possível alterar o status do profissional. Tente novamente.",
-        variant: "destructive",
-      });
-      return false;
+      throw error;
     }
   };
 
   const deleteProfessional = async (id: string, name: string) => {
-    if (!user) return false;
-
-    if (!confirm(`Tem certeza que deseja deletar o profissional "${name}"?`)) {
-      return false;
+    if (!confirm(`Tem certeza que deseja excluir o profissional ${name}?`)) {
+      return;
     }
 
     try {
-      console.log('Deleting professional:', id);
+      const professional = professionals.find(p => p.id === id);
       
-      const { error } = await (supabase as any)
+      // Deletar profissional (a agenda será mantida para preservar histórico)
+      const { error } = await supabase
         .from('professionals')
         .delete()
         .eq('id', id)
-        .eq('created_by', user.id);
+        .eq('created_by', user?.id);
 
-      if (error) {
-        console.error('Error deleting professional:', error);
-        throw error;
+      if (error) throw error;
+
+      // Se tiver agenda associada, apenas desativá-la
+      if (professional?.calendar_id) {
+        await supabase
+          .from('calendars')
+          .update({ is_active: false })
+          .eq('id', professional.calendar_id);
       }
 
+      setProfessionals(prev => prev.filter(prof => prof.id !== id));
+      
       toast({
-        title: "Profissional deletado",
-        description: `Profissional "${name}" foi deletado com sucesso.`,
+        title: "Profissional excluído",
+        description: `${name} foi removido com sucesso`,
       });
-
-      await fetchProfessionals();
-      return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting professional:', error);
       toast({
-        title: "Erro ao deletar profissional",
-        description: "Não foi possível deletar o profissional. Tente novamente.",
+        title: "Erro ao excluir profissional",
+        description: error.message,
         variant: "destructive",
       });
-      return false;
     }
   };
 
-  useEffect(() => {
-    if (user) {
-      fetchProfessionals();
-    } else {
-      setProfessionals([]);
-      setLoading(false);
+  const toggleProfessionalStatus = async (id: string, currentStatus: boolean) => {
+    try {
+      await updateProfessional(id, { is_active: !currentStatus });
+      
+      // Também atualizar status da agenda associada
+      const professional = professionals.find(p => p.id === id);
+      if (professional?.calendar_id) {
+        await supabase
+          .from('calendars')
+          .update({ is_active: !currentStatus })
+          .eq('id', professional.calendar_id);
+      }
+    } catch (error) {
+      // Error already handled in updateProfessional
     }
-  }, [user]);
+  };
 
   return {
     professionals,
     loading,
+    fetchProfessionals,
     createProfessional,
     updateProfessional,
-    toggleProfessionalStatus,
     deleteProfessional,
-    refreshProfessionals: fetchProfessionals,
+    toggleProfessionalStatus
   };
 };

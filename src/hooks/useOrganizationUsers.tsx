@@ -1,48 +1,82 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
+import { useToast } from './use-toast';
+
+interface OrganizationUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  is_active: boolean;
+  created_at: string;
+  organization_role: string;
+}
 
 export const useOrganizationUsers = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<OrganizationUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
 
-  const fetchUsers = async () => {
+  useEffect(() => {
+    if (user && profile?.organization_id) {
+      fetchOrganizationUsers();
+    }
+  }, [user, profile?.organization_id]);
+
+  const fetchOrganizationUsers = async () => {
     if (!profile?.organization_id) {
-      console.log('No organization_id found in profile');
       setLoading(false);
       return;
     }
 
     try {
-      console.log('Fetching users for organization:', profile.organization_id);
+      setLoading(true);
+      
+      // Buscar usuários da organização com join nas tabelas
       const { data, error } = await supabase
         .from('organization_users')
         .select(`
-          *,
-          profiles:user_id (
+          id,
+          user_id,
+          role as organization_role,
+          is_active,
+          created_at,
+          profiles!inner (
+            id,
             name,
             email,
+            role,
             is_active
           )
         `)
-        .eq('organization_id', profile.organization_id);
+        .eq('organization_id', profile.organization_id)
+        .eq('is_active', true);
 
       if (error) {
-        console.error('Error fetching users:', error);
+        console.error('Error fetching organization users:', error);
         throw error;
       }
-      
-      console.log('Fetched users:', data);
-      setUsers(data || []);
-    } catch (error) {
-      console.error('Error fetching organization users:', error);
+
+      // Transformar dados para formato esperado
+      const transformedUsers = (data || []).map((item: any) => ({
+        id: item.profiles.id,
+        name: item.profiles.name,
+        email: item.profiles.email,
+        role: item.profiles.role,
+        is_active: item.profiles.is_active && item.is_active,
+        created_at: item.created_at,
+        organization_role: item.organization_role
+      }));
+
+      setUsers(transformedUsers);
+    } catch (error: any) {
+      console.error('Error in fetchOrganizationUsers:', error);
       toast({
-        title: "Erro",
-        description: "Erro ao carregar usuários da organização",
+        title: "Erro ao carregar usuários",
+        description: error.message || "Tente novamente em alguns instantes",
         variant: "destructive",
       });
     } finally {
@@ -50,116 +84,129 @@ export const useOrganizationUsers = () => {
     }
   };
 
-  const canCreateUser = async () => {
+  const inviteUser = async (email: string, name: string, role: string = 'member') => {
     if (!profile?.organization_id) {
-      console.log('No organization_id for plan check');
-      return false;
-    }
-
-    try {
-      console.log('Checking plan limits for:', profile.organization_id, profile.plan);
-      const { data, error } = await supabase.rpc('check_plan_limits', {
-        p_organization_id: profile.organization_id,
-        p_plan: profile.plan || 'free',
-        p_check_type: 'users'
-      });
-
-      if (error) {
-        console.error('Error checking plan limits:', error);
-        throw error;
-      }
-      
-      console.log('Can create user:', data);
-      return data;
-    } catch (error) {
-      console.error('Error checking user limits:', error);
-      return false;
-    }
-  };
-
-  const createUser = async (userData: { name: string; email: string; role?: string }) => {
-    console.log('Creating user with data:', userData);
-    
-    if (!profile?.organization_id) {
-      console.error('No organization_id found');
       toast({
         title: "Erro",
-        description: "ID da organização não encontrado",
+        description: "Organização não encontrada",
         variant: "destructive",
       });
-      return false;
-    }
-
-    const canCreate = await canCreateUser();
-    if (!canCreate) {
-      toast({
-        title: "Limite Atingido",
-        description: "Você atingiu o limite de usuários do seu plano. Faça upgrade para adicionar mais usuários.",
-        variant: "destructive",
-      });
-      return false;
+      return;
     }
 
     try {
-      // Criar convite na tabela user_invitations
-      console.log('Inserting invitation for:', userData.email);
-      const { data, error } = await supabase
+      // Verificar limite do plano antes de convidar
+      const { data: limitCheck, error: limitError } = await supabase
+        .rpc('check_organization_user_limit', {
+          p_organization_id: profile.organization_id
+        });
+
+      if (limitError) throw limitError;
+
+      if (!limitCheck) {
+        toast({
+          title: "Limite atingido",
+          description: "Você atingiu o limite de usuários do seu plano atual",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Criar convite
+      const { error } = await supabase
         .from('user_invitations')
         .insert({
-          email: userData.email,
-          name: userData.name,
-          role: userData.role || 'member',
+          email,
+          name,
+          role,
           organization_id: profile.organization_id,
-          invited_by: profile.id,
+          invited_by: user?.id,
           status: 'pending'
-        })
-        .select()
-        .single();
+        });
 
-      if (error) {
-        console.error('Error creating invitation:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('Invitation created successfully:', data);
-      
       toast({
-        title: "Convite Enviado",
-        description: `Convite enviado para ${userData.name}. Um email de convite foi enviado para ${userData.email}.`,
+        title: "Convite enviado",
+        description: `Convite enviado para ${email}`,
       });
-      
-      await fetchUsers();
-      return true;
-    } catch (error) {
-      console.error('Error creating user invitation:', error);
-      
-      // Verificar se é erro de email duplicado
-      if (error.message?.includes('duplicate') || error.code === '23505') {
-        toast({
-          title: "Erro",
-          description: "Este email já foi convidado ou já faz parte da organização",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Erro",
-          description: "Erro ao enviar convite para usuário. Tente novamente.",
-          variant: "destructive",
-        });
-      }
-      return false;
+
+      // Refrescar lista
+      fetchOrganizationUsers();
+    } catch (error: any) {
+      console.error('Error inviting user:', error);
+      toast({
+        title: "Erro ao enviar convite",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, [profile?.organization_id]);
+  const removeUser = async (userId: string, userName: string) => {
+    if (!confirm(`Tem certeza que deseja remover ${userName} da organização?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('organization_users')
+        .update({ is_active: false })
+        .eq('user_id', userId)
+        .eq('organization_id', profile?.organization_id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Usuário removido",
+        description: `${userName} foi removido da organização`,
+      });
+
+      // Refrescar lista
+      fetchOrganizationUsers();
+    } catch (error: any) {
+      console.error('Error removing user:', error);
+      toast({
+        title: "Erro ao remover usuário",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateUserRole = async (userId: string, newRole: string) => {
+    try {
+      const { error } = await supabase
+        .from('organization_users')
+        .update({ role: newRole })
+        .eq('user_id', userId)
+        .eq('organization_id', profile?.organization_id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Papel atualizado",
+        description: "Papel do usuário foi atualizado com sucesso",
+      });
+
+      // Refrescar lista
+      fetchOrganizationUsers();
+    } catch (error: any) {
+      console.error('Error updating user role:', error);
+      toast({
+        title: "Erro ao atualizar papel",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   return {
     users,
     loading,
-    fetchUsers,
-    createUser,
-    canCreateUser,
+    fetchOrganizationUsers,
+    inviteUser,
+    removeUser,
+    updateUserRole
   };
 };

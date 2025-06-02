@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Eye, EyeOff, MoreHorizontal, Trash2, Mail, Phone } from "lucide-react";
+import { Users, Settings, Eye, EyeOff, MoreHorizontal, Trash2, Mail, Phone, Clock } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,9 +10,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useProfessionals } from "@/hooks/useProfessionals";
+import { useState } from "react";
 
 const ProfessionalsList = () => {
   const { professionals, loading, toggleProfessionalStatus, deleteProfessional } = useProfessionals();
+  const [selectedProfessional, setSelectedProfessional] = useState(null);
+
+  const handleConfigureSchedule = (professional: any) => {
+    // Implementar modal de configuração de horários
+    console.log('Configure schedule for:', professional);
+  };
 
   if (loading) {
     return (
@@ -39,15 +46,16 @@ const ProfessionalsList = () => {
         <CardTitle className="flex items-center space-x-2">
           <Users className="h-5 w-5" />
           <span>Profissionais</span>
+          <Badge variant="secondary">{professionals.length}</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
         {professionals.length === 0 ? (
           <div className="text-center py-8">
             <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">Nenhum profissional cadastrado ainda</p>
+            <p className="text-gray-600">Nenhum profissional cadastrado</p>
             <p className="text-sm text-gray-500 mt-2">
-              Clique em "Novo Profissional" para cadastrar seu primeiro profissional
+              Clique em "Novo Profissional" para adicionar o primeiro profissional
             </p>
           </div>
         ) : (
@@ -64,18 +72,22 @@ const ProfessionalsList = () => {
                     </div>
                     <div>
                       <h3 className="font-medium">{professional.name}</h3>
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
-                        <Mail className="h-3 w-3" />
-                        <span>{professional.email}</span>
+                      <div className="flex items-center space-x-4 text-sm text-gray-600">
+                        {professional.email && (
+                          <div className="flex items-center space-x-1">
+                            <Mail className="h-3 w-3" />
+                            <span>{professional.email}</span>
+                          </div>
+                        )}
                         {professional.phone && (
-                          <>
-                            <Phone className="h-3 w-3 ml-2" />
+                          <div className="flex items-center space-x-1">
+                            <Phone className="h-3 w-3" />
                             <span>{professional.phone}</span>
-                          </>
+                          </div>
                         )}
                       </div>
                       {professional.specialization && (
-                        <p className="text-xs text-gray-500 mt-1">{professional.specialization}</p>
+                        <p className="text-sm text-gray-500 mt-1">{professional.specialization}</p>
                       )}
                     </div>
                   </div>
@@ -85,9 +97,11 @@ const ProfessionalsList = () => {
                       {professional.is_active ? "Ativo" : "Inativo"}
                     </Badge>
                     
-                    <Badge variant="outline">
-                      {professional.role}
-                    </Badge>
+                    {professional.calendar_id && (
+                      <Badge variant="outline" className="text-xs">
+                        Agenda Criada
+                      </Badge>
+                    )}
 
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -96,6 +110,10 @@ const ProfessionalsList = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleConfigureSchedule(professional)}>
+                          <Clock className="mr-2 h-4 w-4" />
+                          Configurar Horários
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => toggleProfessionalStatus(professional.id, professional.is_active)}
                         >

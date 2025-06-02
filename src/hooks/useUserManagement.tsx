@@ -22,26 +22,36 @@ export const useUserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        setError(error.message);
-        toast({
-          title: "Erro ao carregar usuários",
-          description: "Tente novamente em alguns instantes",
-          variant: "destructive",
-        });
+      const isSuperAdmin = PermissionManager.isSuperAdminSync(profile);
+      
+      if (isSuperAdmin) {
+        // Usar função segura para superadmin buscar todos os usuários
+        const { data, error } = await supabase.rpc('get_all_users_for_admin');
+        
+        if (error) {
+          throw error;
+        }
+        
+        setUsers(data as UserProfile[]);
       } else {
+        // Para admins normais, buscar apenas usuários da organização
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('organization_id', profile?.organization_id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          throw error;
+        }
+        
         setUsers(data as UserProfile[]);
       }
     } catch (err: any) {
       setError(err.message);
       toast({
-        title: "Erro inesperado",
-        description: "Tente novamente em alguns instantes",
+        title: "Erro ao carregar usuários",
+        description: err.message,
         variant: "destructive",
       });
     } finally {
@@ -50,78 +60,58 @@ export const useUserManagement = () => {
   };
 
   const updateUserStatus = async (userId: string, isActive: boolean) => {
-    setLoading(true);
     try {
       const { error } = await supabase
         .from('profiles')
         .update({ is_active: isActive })
         .eq('id', userId);
 
-      if (error) {
-        setError(error.message);
-        toast({
-          title: "Erro ao atualizar usuário",
-          description: "Tente novamente em alguns instantes",
-          variant: "destructive",
-        });
-      } else {
-        setUsers(prevUsers =>
-          prevUsers.map(user =>
-            user.id === userId ? { ...user, is_active: isActive } : user
-          )
-        );
-        toast({
-          title: "Usuário atualizado",
-          description: "Status do usuário atualizado com sucesso",
-        });
-      }
-    } catch (err: any) {
-      setError(err.message);
+      if (error) throw error;
+
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId ? { ...user, is_active: isActive } : user
+        )
+      );
+      
       toast({
-        title: "Erro inesperado",
-        description: "Tente novamente em alguns instantes",
+        title: "Usuário atualizado",
+        description: "Status do usuário atualizado com sucesso",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Erro ao atualizar usuário",
+        description: err.message,
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
   const updateUserPlan = async (userId: string, plan: string) => {
-    setLoading(true);
     try {
       const { error } = await supabase
         .from('profiles')
         .update({ plan: plan as UserProfile['plan'] })
         .eq('id', userId);
 
-      if (error) {
-        setError(error.message);
-        toast({
-          title: "Erro ao atualizar plano",
-          description: "Tente novamente em alguns instantes",
-          variant: "destructive",
-        });
-      } else {
-        setUsers(prevUsers =>
-          prevUsers.map(user =>
-            user.id === userId ? { ...user, plan: plan as UserProfile['plan'] } : user
-          )
-        );
-        toast({
-          title: "Plano atualizado",
-          description: "Plano do usuário atualizado com sucesso",
-        });
-      }
-    } catch (err: any) {
-      setError(err.message);
+      if (error) throw error;
+
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId ? { ...user, plan: plan as UserProfile['plan'] } : user
+        )
+      );
+      
       toast({
-        title: "Erro inesperado",
-        description: "Tente novamente em alguns instantes",
+        title: "Plano atualizado",
+        description: "Plano do usuário atualizado com sucesso",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Erro ao atualizar plano",
+        description: err.message,
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -222,36 +212,26 @@ export const useUserManagement = () => {
   };
 
   const deleteUser = async (userId: string) => {
-    setLoading(true);
     try {
       const { error } = await supabase
         .from('profiles')
         .delete()
         .eq('id', userId);
 
-      if (error) {
-        setError(error.message);
-        toast({
-          title: "Erro ao deletar usuário",
-          description: "Tente novamente em alguns instantes",
-          variant: "destructive",
-        });
-      } else {
-        setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
-        toast({
-          title: "Usuário deletado",
-          description: "Usuário deletado com sucesso",
-        });
-      }
-    } catch (err: any) {
-      setError(err.message);
+      if (error) throw error;
+
+      setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+      
       toast({
-        title: "Erro inesperado",
-        description: "Tente novamente em alguns instantes",
+        title: "Usuário deletado",
+        description: "Usuário deletado com sucesso",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Erro ao deletar usuário",
+        description: err.message,
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 

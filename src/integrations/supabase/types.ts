@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      appearance_settings: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           appointment_date: string
@@ -130,6 +157,82 @@ export type Database = {
           user_agent?: string | null
         }
         Relationships: []
+      }
+      calendar_permissions: {
+        Row: {
+          calendar_id: string
+          created_at: string
+          granted_by: string
+          id: string
+          permission_type: string
+          user_id: string
+        }
+        Insert: {
+          calendar_id: string
+          created_at?: string
+          granted_by: string
+          id?: string
+          permission_type: string
+          user_id: string
+        }
+        Update: {
+          calendar_id?: string
+          created_at?: string
+          granted_by?: string
+          id?: string
+          permission_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_permissions_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_schedules: {
+        Row: {
+          calendar_id: string
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_active: boolean | null
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          calendar_id: string
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_active?: boolean | null
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          calendar_id?: string
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_schedules_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       calendars: {
         Row: {
@@ -303,6 +406,54 @@ export type Database = {
           organization_id?: string
           role?: string | null
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      professionals: {
+        Row: {
+          calendar_id: string | null
+          created_at: string
+          created_by: string
+          email: string
+          id: string
+          is_active: boolean | null
+          name: string
+          organization_id: string | null
+          phone: string | null
+          role: string | null
+          specialization: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calendar_id?: string | null
+          created_at?: string
+          created_by: string
+          email: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          organization_id?: string | null
+          phone?: string | null
+          role?: string | null
+          specialization?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calendar_id?: string | null
+          created_at?: string
+          created_by?: string
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          organization_id?: string | null
+          phone?: string | null
+          role?: string | null
+          specialization?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -556,6 +707,10 @@ export type Database = {
         Args: { p_user_id: string; p_new_password: string }
         Returns: boolean
       }
+      check_organization_user_limit: {
+        Args: { p_organization_id: string }
+        Returns: boolean
+      }
       check_plan_limits: {
         Args: {
           p_organization_id: string
@@ -564,9 +719,31 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_all_users_for_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          email: string
+          role: Database["public"]["Enums"]["user_role"]
+          is_active: boolean
+          email_confirmed: boolean
+          plan: string
+          plan_expires_at: string
+          organization_id: string
+          clinic_name: string
+          service_type: string
+          created_at: string
+          updated_at: string
+        }[]
+      }
       get_calendar_appointments_count: {
         Args: { calendar_id: string }
         Returns: number
+      }
+      get_system_statistics: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       has_role: {
         Args: {

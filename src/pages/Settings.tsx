@@ -127,23 +127,28 @@ const Settings = () => {
             </CardContent>
           </Card>
 
-          {/* Aparência */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Palette className="h-5 w-5 text-pink-600" />
-                <span>Aparência</span>
-              </CardTitle>
-              <CardDescription>
-                Personalize cores, logotipo e tema da aplicação
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full" variant="outline">
-                Em breve
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Aparência (apenas super admin) */}
+          {isSuperAdmin && (
+            <Card className="hover:shadow-lg transition-shadow border-purple-200">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Palette className="h-5 w-5 text-purple-600" />
+                  <span>Aparência</span>
+                </CardTitle>
+                <CardDescription>
+                  Personalize cores, logotipo e tema da aplicação (Super Admin)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link to="/appearance-settings">
+                  <Button className="w-full" variant="secondary">
+                    <Palette className="h-4 w-4 mr-2" />
+                    Personalizar Aparência
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Configurações do Sistema (apenas super admin) */}
           {isSuperAdmin && (

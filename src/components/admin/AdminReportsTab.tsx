@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,51 +7,157 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Download, FileText, Users, Calendar, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+interface SystemStats {
+  total_users: number;
+  active_users: number;
+  inactive_users: number;
+  new_users_this_month: number;
+  plan_distribution: Record<string, number>;
+  total_appointments: number;
+  appointments_this_month: number;
+  total_revenue_estimate: number;
+}
 
 const AdminReportsTab = () => {
   const [reportType, setReportType] = useState("users");
   const [dateRange, setDateRange] = useState("last_30_days");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [stats, setStats] = useState<SystemStats | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const handleExportPDF = () => {
-    toast({
-      title: "Exportando PDF",
-      description: "O relatório está sendo gerado e será baixado em breve.",
-    });
-    // Implement actual PDF export logic here
-  };
+  useEffect(() => {
+    fetchSystemStats();
+  }, []);
 
-  const handleExportExcel = () => {
-    toast({
-      title: "Exportando Excel",
-      description: "O relatório está sendo gerado e será baixado em breve.",
-    });
-    // Implement actual Excel export logic here
-  };
-
-  // Mock data
-  const reportData = {
-    users: {
-      total: 1247,
-      active: 1124,
-      inactive: 123,
-      newThisMonth: 89
-    },
-    upgrades: {
-      total: 45,
-      thisMonth: 12,
-      revenue: 15680,
-      conversionRate: 8.5
-    },
-    plans: {
-      free: 623,
-      basico: 398,
-      profissional: 187,
-      premium: 39
+  const fetchSystemStats = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.rpc('get_system_statistics');
+      
+      if (error) throw error;
+      
+      setStats(data);
+    } catch (error: any) {
+      console.error('Error fetching system stats:', error);
+      toast({
+        title: "Erro ao carregar estatísticas",
+        description: "Não foi possível carregar as estatísticas do sistema",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleExportPDF = async () => {
+    try {
+      // Implementar exportação PDF real
+      const reportData = {
+        type: reportType,
+        dateRange,
+        startDate,
+        endDate,
+        stats,
+        timestamp: new Date().toISOString()
+      };
+
+      const blob = new Blob([JSON.stringify(reportData, null, 2)], { 
+        type: 'application/json' 
+      });
+      
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `relatorio-${reportType}-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Relatório Exportado",
+        description: "O relatório foi exportado com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro na Exportação",
+        description: "Erro ao exportar o relatório",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      // Implementar exportação Excel real
+      const csvData = generateCSVData();
+      const blob = new Blob([csvData], { type: 'text/csv' });
+      
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `relatorio-${reportType}-${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Relatório Exportado",
+        description: "O relatório CSV foi exportado com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro na Exportação",
+        description: "Erro ao exportar o relatório CSV",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const generateCSVData = () => {
+    if (!stats) return '';
+    
+    let csvContent = '';
+    
+    if (reportType === 'users') {
+      csvContent = 'Métrica,Valor\n';
+      csvContent += `Total de Usuários,${stats.total_users}\n`;
+      csvContent += `Usuários Ativos,${stats.active_users}\n`;
+      csvContent += `Usuários Inativos,${stats.inactive_users}\n`;
+      csvContent += `Novos Usuários Este Mês,${stats.new_users_this_month}\n`;
+    } else if (reportType === 'plans') {
+      csvContent = 'Plano,Quantidade\n';
+      Object.entries(stats.plan_distribution || {}).forEach(([plan, count]) => {
+        csvContent += `${plan},${count}\n`;
+      });
+    }
+    
+    return csvContent;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-600">Erro ao carregar estatísticas do sistema</p>
+        <Button onClick={fetchSystemStats} className="mt-4">
+          Tentar Novamente
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -59,17 +165,17 @@ const AdminReportsTab = () => {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Relatórios Administrativos</h2>
           <p className="text-gray-600 mt-1">
-            Relatórios completos do sistema e exportação de dados
+            Relatórios completos do sistema com dados atualizados
           </p>
         </div>
         <div className="flex space-x-2">
           <Button onClick={handleExportPDF} variant="outline">
             <Download className="h-4 w-4 mr-2" />
-            Exportar PDF
+            Exportar JSON
           </Button>
           <Button onClick={handleExportExcel} variant="outline">
             <Download className="h-4 w-4 mr-2" />
-            Exportar Excel
+            Exportar CSV
           </Button>
         </div>
       </div>
@@ -88,8 +194,8 @@ const AdminReportsTab = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="users">Usuários</SelectItem>
-                  <SelectItem value="upgrades">Upgrades</SelectItem>
                   <SelectItem value="plans">Distribuição de Planos</SelectItem>
+                  <SelectItem value="appointments">Agendamentos</SelectItem>
                   <SelectItem value="revenue">Receita</SelectItem>
                 </SelectContent>
               </Select>
@@ -145,8 +251,8 @@ const AdminReportsTab = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{reportData.users.total.toLocaleString()}</div>
-            <p className="text-xs text-gray-500">+{reportData.users.newThisMonth} este mês</p>
+            <div className="text-2xl font-bold text-blue-600">{stats.total_users.toLocaleString()}</div>
+            <p className="text-xs text-gray-500">+{stats.new_users_this_month} este mês</p>
           </CardContent>
         </Card>
 
@@ -154,12 +260,14 @@ const AdminReportsTab = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
               <TrendingUp className="h-4 w-4 mr-2" />
-              Upgrades este Mês
+              Usuários Ativos
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{reportData.upgrades.thisMonth}</div>
-            <p className="text-xs text-gray-500">Taxa: {reportData.upgrades.conversionRate}%</p>
+            <div className="text-2xl font-bold text-green-600">{stats.active_users.toLocaleString()}</div>
+            <p className="text-xs text-gray-500">
+              {stats.total_users > 0 ? Math.round((stats.active_users / stats.total_users) * 100) : 0}% do total
+            </p>
           </CardContent>
         </Card>
 
@@ -167,12 +275,14 @@ const AdminReportsTab = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
               <FileText className="h-4 w-4 mr-2" />
-              Receita Mensal
+              Receita Estimada
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">R$ {reportData.upgrades.revenue.toLocaleString()}</div>
-            <p className="text-xs text-gray-500">Upgrades totais: {reportData.upgrades.total}</p>
+            <div className="text-2xl font-bold text-purple-600">
+              R$ {(stats.total_revenue_estimate || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </div>
+            <p className="text-xs text-gray-500">Este mês</p>
           </CardContent>
         </Card>
 
@@ -180,12 +290,12 @@ const AdminReportsTab = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
               <Calendar className="h-4 w-4 mr-2" />
-              Usuários Ativos
+              Agendamentos
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{reportData.users.active.toLocaleString()}</div>
-            <p className="text-xs text-gray-500">{Math.round((reportData.users.active / reportData.users.total) * 100)}% do total</p>
+            <div className="text-2xl font-bold text-orange-600">{stats.appointments_this_month.toLocaleString()}</div>
+            <p className="text-xs text-gray-500">Este mês ({stats.total_appointments} total)</p>
           </CardContent>
         </Card>
       </div>
@@ -195,8 +305,8 @@ const AdminReportsTab = () => {
         <CardHeader>
           <CardTitle>
             {reportType === 'users' && 'Relatório de Usuários'}
-            {reportType === 'upgrades' && 'Relatório de Upgrades'}
             {reportType === 'plans' && 'Distribuição de Planos'}
+            {reportType === 'appointments' && 'Relatório de Agendamentos'}
             {reportType === 'revenue' && 'Relatório de Receita'}
           </CardTitle>
         </CardHeader>
@@ -205,15 +315,15 @@ const AdminReportsTab = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{reportData.users.total}</div>
+                  <div className="text-2xl font-bold text-blue-600">{stats.total_users}</div>
                   <div className="text-sm text-gray-600">Total de Usuários</div>
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{reportData.users.active}</div>
+                  <div className="text-2xl font-bold text-green-600">{stats.active_users}</div>
                   <div className="text-sm text-gray-600">Usuários Ativos</div>
                 </div>
                 <div className="text-center p-4 bg-red-50 rounded-lg">
-                  <div className="text-2xl font-bold text-red-600">{reportData.users.inactive}</div>
+                  <div className="text-2xl font-bold text-red-600">{stats.inactive_users}</div>
                   <div className="text-sm text-gray-600">Usuários Inativos</div>
                 </div>
               </div>
@@ -222,22 +332,34 @@ const AdminReportsTab = () => {
 
           {reportType === 'plans' && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-gray-600">{reportData.plans.free}</div>
-                <div className="text-sm text-gray-600">Plano Gratuito</div>
-              </div>
+              {Object.entries(stats.plan_distribution || {}).map(([plan, count]) => (
+                <div key={plan} className="text-center p-4 bg-gray-50 rounded-lg">
+                  <div className="text-2xl font-bold text-gray-600">{count}</div>
+                  <div className="text-sm text-gray-600 capitalize">{plan}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {reportType === 'appointments' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{reportData.plans.basico}</div>
-                <div className="text-sm text-gray-600">Plano Básico</div>
+                <div className="text-2xl font-bold text-blue-600">{stats.total_appointments}</div>
+                <div className="text-sm text-gray-600">Total de Agendamentos</div>
               </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">{reportData.plans.profissional}</div>
-                <div className="text-sm text-gray-600">Plano Profissional</div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">{stats.appointments_this_month}</div>
+                <div className="text-sm text-gray-600">Agendamentos Este Mês</div>
               </div>
-              <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                <div className="text-2xl font-bold text-yellow-600">{reportData.plans.premium}</div>
-                <div className="text-sm text-gray-600">Plano Premium</div>
+            </div>
+          )}
+
+          {reportType === 'revenue' && (
+            <div className="text-center p-4 bg-purple-50 rounded-lg">
+              <div className="text-2xl font-bold text-purple-600">
+                R$ {(stats.total_revenue_estimate || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </div>
+              <div className="text-sm text-gray-600">Receita Estimada Este Mês</div>
             </div>
           )}
         </CardContent>
