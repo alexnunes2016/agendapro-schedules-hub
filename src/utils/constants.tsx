@@ -27,7 +27,7 @@ export const APP_CONFIG = {
   TOAST_DURATION: 5000,
   DEBOUNCE_DELAY: 300,
   
-  // Plan limits
+  // Plan limits - Updated per requirements
   PLAN_LIMITS: {
     free: {
       users: 1,
@@ -36,13 +36,13 @@ export const APP_CONFIG = {
       storage_mb: 100
     },
     basico: {
-      users: 3,
+      users: 3, // Updated from 2 to 3
       calendars: 2,
       appointments_per_month: 200,
       storage_mb: 500
     },
     profissional: {
-      users: 5,
+      users: 5, // Updated from unlimited to 5
       calendars: -1, // unlimited
       appointments_per_month: 1000,
       storage_mb: 2000
@@ -87,6 +87,19 @@ export const APP_CONFIG = {
     { value: 'basico', label: 'Básico' },
     { value: 'profissional', label: 'Profissional' },
     { value: 'premium', label: 'Premium' }
+  ],
+
+  // Service types - Expanded per requirements
+  SERVICE_TYPES: [
+    { value: 'medicina', label: 'Medicina' },
+    { value: 'odontologia', label: 'Odontologia' },
+    { value: 'salao_beleza', label: 'Salão de Beleza' },
+    { value: 'psicologia', label: 'Psicologia' },
+    { value: 'consultorio', label: 'Consultório' },
+    { value: 'academia', label: 'Academia' },
+    { value: 'fisioterapia', label: 'Fisioterapia' },
+    { value: 'estudio', label: 'Estúdio' },
+    { value: 'outros', label: 'Outros' }
   ]
 };
 
@@ -111,7 +124,8 @@ export const ERROR_MESSAGES = {
   REQUIRED_FIELD: 'Este campo é obrigatório.',
   INVALID_EMAIL: 'Email inválido.',
   WEAK_PASSWORD: 'Senha muito fraca.',
-  PASSWORD_MISMATCH: 'Senhas não coincidem.'
+  PASSWORD_MISMATCH: 'Senhas não coincidem.',
+  USER_LIMIT_REACHED: 'Limite de usuários do plano atingido.'
 };
 
 // Success messages

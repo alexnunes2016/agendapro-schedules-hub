@@ -28,6 +28,7 @@ const Pricing = () => {
       features: [
         "2 agendas",
         "Até 200 agendamentos/mês",
+        "Até 3 usuários",
         "Lembretes por email",
         "Prontuários básicos no perfil médico e odontológico",
         "Relatórios simples",
@@ -43,7 +44,7 @@ const Pricing = () => {
       description: "Para profissionais que crescem",
       features: [
         "Agendamentos ilimitados",
-        "Até 3 usuários",
+        "Até 5 usuários",
         "Lembretes por email",
         "Relatórios básicos",
         "Integração com calendário",

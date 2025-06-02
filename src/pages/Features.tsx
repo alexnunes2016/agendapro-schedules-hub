@@ -102,6 +102,11 @@ const Features = () => {
       benefits: ["Redução de faltas", "Otimização de agenda", "Lembretes automáticos"]
     },
     {
+      title: "Clínicas Odontológicas",
+      description: "Gerencie tratamentos, procedimentos e retornos com facilidade total.",
+      benefits: ["Controle de tratamentos", "Prontuários digitais", "Agenda otimizada"]
+    },
+    {
       title: "Salões de Beleza",
       description: "Gerencie serviços, profissionais e horários com facilidade total.",
       benefits: ["Múltiplos profissionais", "Serviços variados", "Fidelização de clientes"]
@@ -125,6 +130,11 @@ const Features = () => {
       title: "Psicologia",
       description: "Mantenha a confidencialidade com sistema seguro e profissional.",
       benefits: ["Privacidade total", "Sessões regulares", "Anotações seguras"]
+    },
+    {
+      title: "Estúdios",
+      description: "Gerencie ensaios fotográficos, gravações e eventos criativos.",
+      benefits: ["Agendamento flexível", "Controle de equipamentos", "Gestão de projetos"]
     }
   ];
 
@@ -205,7 +215,7 @@ const Features = () => {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Perfeito Para Seu Segmento
+              Perfeito Para Seu Negócio: Clínicas Médicas e Clínicas Odontológicas
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Nossa IA se adapta às necessidades específicas de cada tipo de negócio, 
@@ -213,7 +223,7 @@ const Features = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {targetAudiences.map((audience, index) => (
               <Card key={index} className="border-l-4 border-l-blue-600">
                 <CardHeader>
@@ -286,7 +296,7 @@ const Features = () => {
             Pronto para Revolucionar Seus Agendamentos?
           </h2>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Junte-se a milhares de profissionais que já transformaram seus negócios com nossa IA.
+            Junte-se a mais de 3.000 profissionais que já transformaram seus negócios com nossa IA.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/register">

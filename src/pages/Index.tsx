@@ -32,8 +32,10 @@ const Index = () => {
             </h1>
             
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Nossa plataforma automatiza confirmações via WhatsApp, otimiza sua agenda, reduz faltas 
-              e aumenta sua receita. Perfeito para clínicas, salões, consultórios e muito mais.
+              Nossa plataforma automatiza o envio de confirmações e lembretes via WhatsApp, 
+              reduzindo faltas, otimizando sua agenda e melhorando o atendimento ao cliente. 
+              Ideal para clínicas, consultórios, salões de beleza, estúdios e diversos tipos 
+              de negócios que dependem de agendamentos.
             </p>
 
             {/* Features Highlight */}
@@ -71,7 +73,24 @@ const Index = () => {
             <div className="flex items-center justify-center space-x-6 text-sm text-gray-500">
               <span>✅ Sem cartão de crédito</span>
               <span>✅ Configuração em 5 minutos</span>
-              <span>✅ Suporte brasileiro</span>
+              <span>📞 Suporte personalizado 24/7</span>
+            </div>
+
+            <div className="mt-8 text-center">
+              <p className="text-lg font-semibold text-gray-700 mb-2">
+                Mais de 3.000 profissionais confiam no AgendoPro
+              </p>
+              <div className="flex justify-center items-center space-x-2">
+                <div className="flex -space-x-1">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="w-8 h-8 bg-blue-600 rounded-full border-2 border-white flex items-center justify-center">
+                      <span className="text-white text-xs font-semibold">{i}</span>
+                    </div>
+                  ))}
+                </div>
+                <span className="text-yellow-500 text-xl">★★★★★</span>
+                <span className="text-gray-600">4.9/5 avaliação média</span>
+              </div>
             </div>
           </div>
         </div>
@@ -84,6 +103,28 @@ const Index = () => {
       <Pricing />
       <CTA />
       <Footer />
+
+      {/* Chatwoot Script */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function(d,t) {
+              var BASE_URL="https://mychatapp.judahtech.com.br";
+              var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+              g.src=BASE_URL+"/packs/js/sdk.js";
+              g.defer = true;
+              g.async = true;
+              s.parentNode.insertBefore(g,s);
+              g.onload=function(){
+                window.chatwootSDK.run({
+                  websiteToken: 'JAvi8jMPBWqUTj4D7p5gBh65',
+                  baseUrl: BASE_URL
+                })
+              }
+            })(document,"script");
+          `,
+        }}
+      />
     </div>
   );
 };
