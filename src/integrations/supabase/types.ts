@@ -101,6 +101,39 @@ export type Database = {
         }
         Relationships: []
       }
+      calendars: {
+        Row: {
+          color: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       medical_record_files: {
         Row: {
           created_at: string
@@ -464,6 +497,10 @@ export type Database = {
           p_check_type: string
         }
         Returns: boolean
+      }
+      get_calendar_appointments_count: {
+        Args: { calendar_id: string }
+        Returns: number
       }
       has_role: {
         Args: {

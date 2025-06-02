@@ -1,36 +1,48 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCalendars } from "@/hooks/useCalendars";
+import { useCalendars, Calendar } from "@/hooks/useCalendars";
 
-interface CreateCalendarModalProps {
+interface EditCalendarModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  calendar: Calendar | null;
 }
 
-const CreateCalendarModal = ({ open, onOpenChange }: CreateCalendarModalProps) => {
+const EditCalendarModal = ({ open, onOpenChange, calendar }: EditCalendarModalProps) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     color: "#3B82F6"
   });
-  const { createCalendar } = useCalendars();
+  const { updateCalendar } = useCalendars();
+
+  useEffect(() => {
+    if (calendar) {
+      setFormData({
+        name: calendar.name,
+        description: calendar.description || "",
+        color: calendar.color
+      });
+    }
+  }, [calendar]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!calendar) return;
+    
     setLoading(true);
 
     try {
-      const success = await createCalendar(formData);
+      const success = await updateCalendar(calendar.id, formData);
       
       if (success) {
-        setFormData({ name: "", description: "", color: "#3B82F6" });
         onOpenChange(false);
       }
     } catch (error) {
@@ -49,17 +61,19 @@ const CreateCalendarModal = ({ open, onOpenChange }: CreateCalendarModalProps) =
     { value: "#F97316", label: "Laranja" }
   ];
 
+  if (!calendar) return null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Criar Nova Agenda</DialogTitle>
+          <DialogTitle>Editar Agenda</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="name">Nome da Agenda</Label>
+            <Label htmlFor="edit-name">Nome da Agenda</Label>
             <Input
-              id="name"
+              id="edit-name"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Ex: Agenda Principal"
@@ -68,9 +82,9 @@ const CreateCalendarModal = ({ open, onOpenChange }: CreateCalendarModalProps) =
           </div>
           
           <div>
-            <Label htmlFor="description">Descrição</Label>
+            <Label htmlFor="edit-description">Descrição</Label>
             <Textarea
-              id="description"
+              id="edit-description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Descrição da agenda..."
@@ -79,7 +93,7 @@ const CreateCalendarModal = ({ open, onOpenChange }: CreateCalendarModalProps) =
           </div>
 
           <div>
-            <Label htmlFor="color">Cor da Agenda</Label>
+            <Label htmlFor="edit-color">Cor da Agenda</Label>
             <Select value={formData.color} onValueChange={(value) => setFormData(prev => ({ ...prev, color: value }))}>
               <SelectTrigger>
                 <SelectValue>
@@ -110,7 +124,7 @@ const CreateCalendarModal = ({ open, onOpenChange }: CreateCalendarModalProps) =
 
           <div className="flex space-x-2">
             <Button type="submit" className="flex-1" disabled={loading}>
-              {loading ? "Criando..." : "Criar Agenda"}
+              {loading ? "Salvando..." : "Salvar Alterações"}
             </Button>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
@@ -122,4 +136,4 @@ const CreateCalendarModal = ({ open, onOpenChange }: CreateCalendarModalProps) =
   );
 };
 
-export default CreateCalendarModal;
+export default EditCalendarModal;

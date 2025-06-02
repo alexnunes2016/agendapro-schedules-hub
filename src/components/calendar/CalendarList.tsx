@@ -2,34 +2,36 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Settings, Users, Eye, EyeOff, MoreHorizontal } from "lucide-react";
+import { Calendar, Settings, Users, Eye, EyeOff, MoreHorizontal, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useCalendars } from "@/hooks/useCalendars";
 
 const CalendarList = () => {
-  // Mock data - em produção viria do banco
-  const calendars = [
-    {
-      id: "1",
-      name: "Agenda Principal",
-      description: "Agenda para atendimentos gerais",
-      color: "#3B82F6",
-      is_active: true,
-      appointments_count: 15
-    },
-    {
-      id: "2", 
-      name: "Urgências",
-      description: "Agenda para casos de urgência",
-      color: "#EF4444",
-      is_active: true,
-      appointments_count: 3
-    }
-  ];
+  const { calendars, loading, toggleCalendarStatus, deleteCalendar } = useCalendars();
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Calendar className="h-5 w-5" />
+            <span>Minhas Agendas</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Carregando agendas...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -44,6 +46,9 @@ const CalendarList = () => {
           <div className="text-center py-8">
             <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600">Nenhuma agenda criada ainda</p>
+            <p className="text-sm text-gray-500 mt-2">
+              Clique em "Nova Agenda" para criar sua primeira agenda
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -87,7 +92,9 @@ const CalendarList = () => {
                           <Settings className="mr-2 h-4 w-4" />
                           Configurar
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => toggleCalendarStatus(calendar.id, calendar.is_active)}
+                        >
                           {calendar.is_active ? (
                             <>
                               <EyeOff className="mr-2 h-4 w-4" />
@@ -99,6 +106,13 @@ const CalendarList = () => {
                               Ativar
                             </>
                           )}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => deleteCalendar(calendar.id, calendar.name)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Deletar
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

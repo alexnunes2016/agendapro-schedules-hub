@@ -10,7 +10,37 @@ import CalendarList from "@/components/calendar/CalendarList";
 
 const CalendarSettings = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const { profile } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+            Acesso Negado
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Você precisa estar logado para acessar as configurações de agenda.
+          </p>
+          <Link to="/login">
+            <Button>Fazer Login</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
