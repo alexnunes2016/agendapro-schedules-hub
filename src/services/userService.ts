@@ -217,7 +217,28 @@ export const userService = {
         throw new AppError(`Falha ao verificar permissões: ${error.message}`, 'PERMISSION_CHECK_ERROR');
       }
 
-      return data?.is_active && (data?.role === requiredRole || data?.role === 'admin' || data?.role === 'super_admin');
+      // Corrigindo a lógica de comparação de roles
+      const userRole = data?.role;
+      const isActive = data?.is_active;
+      
+      if (!isActive) {
+        return false;
+      }
+
+      // Hierarquia de roles: super_admin > admin > user
+      if (userRole === 'super_admin') {
+        return true;
+      }
+      
+      if (userRole === 'admin' && (requiredRole === 'admin' || requiredRole === 'user')) {
+        return true;
+      }
+      
+      if (userRole === 'user' && requiredRole === 'user') {
+        return true;
+      }
+
+      return false;
     } catch (error: any) {
       console.error('Error in validateUserPermissions:', error);
       if (error instanceof AppError) {
