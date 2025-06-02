@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProfessionals } from "@/hooks/useProfessionals";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CreateProfessionalModalProps {
   open: boolean;
@@ -33,10 +33,19 @@ const CreateProfessionalModal = ({ open, onOpenChange }: CreateProfessionalModal
     setLoading(true);
 
     try {
+      // Obtemos o organization_id do perfil de usuário se disponível
+      const { data } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+      
+      const organization_id = data?.organization_id;
+      
       const success = await createProfessional({
         ...formData,
-        user_id: user.id, // Por enquanto, vinculamos ao próprio usuário
-        organization_id: user.organization_id || undefined
+        user_id: user.id,
+        organization_id: organization_id || undefined
       });
       
       if (success) {

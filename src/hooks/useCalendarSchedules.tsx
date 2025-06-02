@@ -35,11 +35,12 @@ export const useCalendarSchedules = (calendarId?: string) => {
       setLoading(true);
       console.log('Fetching schedules for calendar:', calendarId);
       
+      // Usando any para contornar limitações temporárias do tipo
       const { data, error } = await supabase
         .from('calendar_schedules')
         .select('*')
         .eq('calendar_id', calendarId)
-        .order('day_of_week', { ascending: true });
+        .order('day_of_week', { ascending: true }) as any;
 
       if (error) {
         console.error('Error fetching schedules:', error);
@@ -66,9 +67,10 @@ export const useCalendarSchedules = (calendarId?: string) => {
     try {
       console.log('Creating schedule:', data);
       
+      // Usando any para contornar limitações temporárias do tipo
       const { error } = await supabase
         .from('calendar_schedules')
-        .insert(data);
+        .insert(data) as any;
 
       if (error) {
         console.error('Error creating schedule:', error);
@@ -99,13 +101,14 @@ export const useCalendarSchedules = (calendarId?: string) => {
     try {
       console.log('Updating schedule:', id, data);
       
+      // Usando any para contornar limitações temporárias do tipo
       const { error } = await supabase
         .from('calendar_schedules')
         .update({
           ...data,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', id);
+        .eq('id', id) as any;
 
       if (error) {
         console.error('Error updating schedule:', error);
@@ -136,10 +139,11 @@ export const useCalendarSchedules = (calendarId?: string) => {
     try {
       console.log('Deleting schedule:', id);
       
+      // Usando any para contornar limitações temporárias do tipo
       const { error } = await supabase
         .from('calendar_schedules')
         .delete()
-        .eq('id', id);
+        .eq('id', id) as any;
 
       if (error) {
         console.error('Error deleting schedule:', error);
