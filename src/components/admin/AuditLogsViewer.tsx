@@ -6,18 +6,19 @@ import { Badge } from '@/components/ui/badge';
 import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import type { Json } from '@/integrations/supabase/types';
 
 interface AuditLog {
   id: string;
   action: string;
-  table_name: string;
-  record_id: string;
-  old_values: any;
-  new_values: any;
-  user_id: string;
-  timestamp: string;
-  ip_address: string;
-  user_agent: string;
+  table_name: string | null;
+  record_id: string | null;
+  old_values: Json | null;
+  new_values: Json | null;
+  user_id: string | null;
+  timestamp: string | null;
+  ip_address: unknown | null;
+  user_agent: string | null;
 }
 
 const AuditLogsViewer = () => {
@@ -56,8 +57,14 @@ const AuditLogsViewer = () => {
     }
   };
 
-  const formatTimestamp = (timestamp: string) => {
+  const formatTimestamp = (timestamp: string | null) => {
+    if (!timestamp) return 'N/A';
     return new Date(timestamp).toLocaleString('pt-BR');
+  };
+
+  const formatIpAddress = (ip: unknown) => {
+    if (!ip) return 'N/A';
+    return String(ip);
   };
 
   const getActionBadge = (action: string) => {
@@ -126,14 +133,14 @@ const AuditLogsViewer = () => {
                   <TableRow key={log.id}>
                     <TableCell>{formatTimestamp(log.timestamp)}</TableCell>
                     <TableCell>{getActionBadge(log.action)}</TableCell>
-                    <TableCell>{log.table_name}</TableCell>
+                    <TableCell>{log.table_name || 'N/A'}</TableCell>
                     <TableCell className="font-mono text-xs">
-                      {log.record_id?.substring(0, 8)}...
+                      {log.record_id ? `${log.record_id.substring(0, 8)}...` : 'N/A'}
                     </TableCell>
                     <TableCell className="font-mono text-xs">
-                      {log.user_id?.substring(0, 8)}...
+                      {log.user_id ? `${log.user_id.substring(0, 8)}...` : 'N/A'}
                     </TableCell>
-                    <TableCell>{log.ip_address}</TableCell>
+                    <TableCell>{formatIpAddress(log.ip_address)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
