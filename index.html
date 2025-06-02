@@ -27,21 +27,27 @@
     
     <!-- Chatwoot Script -->
     <script>
-      window.chatwootSettings = {"position":"right","type":"expanded_bubble","launcherTitle":"Como podemos te ajudar hoje?"};
       (function(d,t) {
-        var BASE_URL="https://mychatapp.judahtech.com.br";
-        var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-        g.src=BASE_URL+"/packs/js/sdk.js";
+        window.chatwootSettings = {
+          "position": "right",
+          "type": "expanded_bubble",
+          "launcherTitle": "Como podemos te ajudar hoje?"
+        };
+        
+        var BASE_URL = "https://mychatapp.judahtech.com.br";
+        var g = d.createElement(t);
+        var s = d.getElementsByTagName(t)[0];
+        g.src = BASE_URL + "/packs/js/sdk.js";
         g.defer = true;
         g.async = true;
-        s.parentNode.insertBefore(g,s);
-        g.onload=function(){
+        s.parentNode.insertBefore(g, s);
+        g.onload = function() {
           window.chatwootSDK.run({
             websiteToken: 'JAvi8jMPBWqUTj4D7p5gBh65',
             baseUrl: BASE_URL
-          })
-        }
-      })(document,"script");
+          });
+        };
+      })(document, "script");
     </script>
   </body>
 </html>
