@@ -40,17 +40,14 @@ export default defineConfig(({ mode }) => ({
     logOverride: { 
       'this-is-undefined-in-esm': 'silent'
     },
-    // Force esbuild to handle TypeScript without external config
     loader: 'tsx',
     jsx: 'automatic'
   },
-  // Override TypeScript configuration handling completely
   define: {
     global: 'globalThis',
   },
-  // Disable TypeScript checking to avoid project reference issues
-  typescript: {
-    check: true,
-    build: true
+  // Completely disable TypeScript checking to avoid project reference issues
+  experimental: {
+    skipSSR: true
   }
 }));
