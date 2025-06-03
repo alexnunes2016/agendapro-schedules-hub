@@ -25,6 +25,7 @@
     /* Type Checking */
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
+    "types": ["vite/client"],
 
     "baseUrl": ".",
     "paths": {

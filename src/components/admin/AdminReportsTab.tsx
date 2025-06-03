@@ -76,10 +76,20 @@ const AdminReportsTab = () => {
         filterEndDate = new Date().toISOString();
       }
 
-      const { data, error } = await supabase.rpc('get_system_statistics', {
-        start_date: filterStartDate,
-        end_date: filterEndDate
-      });
+      const rpcParams: { start_date?: string | null; end_date?: string | null } = {};
+      const finalFilterStartDate = filterStartDate || null;
+      const finalFilterEndDate = filterEndDate || null;
+
+      // Only add parameters if they are not null.
+      // If both are null, rpcParams will be empty, and Supabase should call the function with its defaults.
+      if (finalFilterStartDate) {
+        rpcParams.start_date = finalFilterStartDate;
+      }
+      if (finalFilterEndDate) {
+        rpcParams.end_date = finalFilterEndDate;
+      }
+
+      const { data, error } = await supabase.rpc('get_system_statistics', rpcParams);
 
       if (error) {
         if (error.message.includes('Permission denied')) {
