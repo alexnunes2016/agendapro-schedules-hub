@@ -40,34 +40,17 @@ export default defineConfig(({ mode }) => ({
     logOverride: { 
       'this-is-undefined-in-esm': 'silent'
     },
-    // Use completely isolated TypeScript config to avoid project reference issues
-    tsconfigRaw: `{
-      "compilerOptions": {
-        "target": "esnext",
-        "lib": ["dom", "dom.iterable", "esnext"],
-        "allowJs": true,
-        "skipLibCheck": true,
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "strict": false,
-        "forceConsistentCasingInFileNames": true,
-        "module": "esnext",
-        "moduleResolution": "bundler",
-        "resolveJsonModule": true,
-        "isolatedModules": true,
-        "noEmit": false,
-        "jsx": "react-jsx",
-        "baseUrl": ".",
-        "paths": {
-          "@/*": ["./src/*"]
-        }
-      },
-      "include": ["src/**/*"],
-      "exclude": ["node_modules"]
-    }`
+    // Force esbuild to handle TypeScript without external config
+    loader: 'tsx',
+    jsx: 'automatic'
   },
-  // Override TypeScript configuration handling
+  // Override TypeScript configuration handling completely
   define: {
     global: 'globalThis',
+  },
+  // Disable TypeScript checking to avoid project reference issues
+  typescript: {
+    check: false,
+    build: false
   }
 }));
