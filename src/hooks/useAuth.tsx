@@ -1,3 +1,4 @@
+
 import { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
@@ -8,8 +9,6 @@ import { PermissionManager } from '@/utils/permissions';
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  console.log('AuthProvider mounting...');
-  
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -17,7 +16,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchProfile = useCallback(async (userId: string) => {
     try {
-      console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -25,7 +23,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
       
       if (!error && data) {
-        console.log('Profile fetched:', data);
         setProfile(data as UserProfile);
       } else if (error) {
         console.error('Error fetching profile:', error);
@@ -44,13 +41,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [user?.id, fetchProfile]);
 
   useEffect(() => {
-    console.log('AuthProvider useEffect running...');
     let mounted = true;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
-        
         if (!mounted) return;
 
         try {
@@ -78,7 +72,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     supabase.auth.getSession().then(({ data: { session }, error }) => {
-      console.log('Initial session:', session?.user?.id);
       if (!mounted) return;
       
       if (error) {
@@ -102,8 +95,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [fetchProfile, handleError]);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    console.log('Attempting sign in...');
-    
     const canAttempt = await PermissionManager.checkRateLimit(email);
     if (!canAttempt) {
       return { error: new Error('Muitas tentativas de login. Tente novamente em alguns minutos.') };
@@ -126,8 +117,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [handleError]);
 
   const signUp = useCallback(async (email: string, password: string, userData: Partial<UserProfile>) => {
-    console.log('Attempting sign up...');
-    
     const canAttempt = await PermissionManager.checkRateLimit(email);
     if (!canAttempt) {
       return { error: new Error('Muitas tentativas de cadastro. Tente novamente em alguns minutos.') };
@@ -154,7 +143,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [handleError]);
 
   const signOut = useCallback(async () => {
-    console.log('Signing out...');
     try {
       await supabase.auth.signOut();
       setProfile(null);
@@ -166,8 +154,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = Boolean(user && profile);
   const isSuperAdmin = PermissionManager.isSuperAdminSync(profile);
   const isAdmin = PermissionManager.isAdminSync(profile);
-
-  console.log('AuthProvider rendering with loading:', loading, 'user:', !!user);
 
   return (
     <AuthContext.Provider value={{
