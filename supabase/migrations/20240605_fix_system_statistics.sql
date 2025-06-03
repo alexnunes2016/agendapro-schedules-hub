@@ -27,13 +27,16 @@ BEGIN
     user_stats AS (
         SELECT
             COUNT(*) as total_users,
-            COUNT(*) FILTER (WHERE is_active = true) as active_users,
-            COUNT(*) FILTER (WHERE is_active = false) as inactive_users,
-            COUNT(*) FILTER (WHERE date_trunc('month', created_at) = current_month) as new_users_this_month,
-            jsonb_object_agg(
-                COALESCE(plan, 'free'),
-                COUNT(*)
-            ) as plan_distribution
+            SUM(CASE WHEN is_active = true THEN 1 ELSE 0 END) as active_users,
+            SUM(CASE WHEN is_active = false THEN 1 ELSE 0 END) as inactive_users,
+            SUM(CASE WHEN date_trunc('month', created_at) = current_month THEN 1 ELSE 0 END) as new_users_this_month
+        FROM filtered_profiles
+    ),
+    plan_stats AS (
+        SELECT jsonb_object_agg(
+            COALESCE(plan, 'free'),
+            COUNT(*)
+        ) as plan_distribution
         FROM filtered_profiles
     ),
     revenue_stats AS (
@@ -50,7 +53,7 @@ BEGIN
     appointment_stats AS (
         SELECT
             COUNT(*) as total_appointments,
-            COUNT(*) FILTER (WHERE date_trunc('month', start_time) = current_month) as appointments_this_month
+            SUM(CASE WHEN date_trunc('month', start_time) = current_month THEN 1 ELSE 0 END) as appointments_this_month
         FROM appointments
         WHERE (start_date IS NULL OR start_time >= start_date)
           AND (end_date IS NULL OR start_time <= end_date)
@@ -61,12 +64,13 @@ BEGIN
             'active_users', us.active_users,
             'inactive_users', us.inactive_users,
             'new_users_this_month', us.new_users_this_month,
-            'total_revenue_estimate', rs.total_revenue_estimate,
-            'plan_distribution', us.plan_distribution,
-            'total_appointments', aps.total_appointments,
-            'appointments_this_month', aps.appointments_this_month
+            'total_revenue_estimate', COALESCE(rs.total_revenue_estimate, 0),
+            'plan_distribution', COALESCE(ps.plan_distribution, '{}'::jsonb),
+            'total_appointments', COALESCE(aps.total_appointments, 0),
+            'appointments_this_month', COALESCE(aps.appointments_this_month, 0)
         ) INTO result
     FROM user_stats us
+    CROSS JOIN plan_stats ps
     CROSS JOIN revenue_stats rs
     CROSS JOIN appointment_stats aps;
 
