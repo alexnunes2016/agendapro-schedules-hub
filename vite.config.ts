@@ -27,11 +27,19 @@ export default defineConfig(({ mode }) => ({
     include: ['jspdf', 'jspdf-autotable']
   },
   build: {
+    target: 'esnext',
+    minify: 'esbuild',
     commonjsOptions: {
       include: [/jspdf/, /node_modules/]
     },
     rollupOptions: {
       external: [],
+      output: {
+        manualChunks: undefined
+      }
     }
+  },
+  esbuild: {
+    target: 'esnext'
   }
 }));
