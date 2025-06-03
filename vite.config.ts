@@ -40,31 +40,31 @@ export default defineConfig(({ mode }) => ({
     logOverride: { 
       'this-is-undefined-in-esm': 'silent'
     },
-    // Completely bypass TypeScript configuration
-    tsconfigRaw: {
-      compilerOptions: {
-        target: "esnext",
-        lib: ["dom", "dom.iterable", "esnext"],
-        allowJs: true,
-        skipLibCheck: true,
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true,
-        strict: false,
-        forceConsistentCasingInFileNames: true,
-        module: "esnext",
-        moduleResolution: "bundler",
-        resolveJsonModule: true,
-        isolatedModules: true,
-        noEmit: false,
-        jsx: "react-jsx",
-        baseUrl: ".",
-        paths: {
+    // Use completely isolated TypeScript config to avoid project reference issues
+    tsconfigRaw: `{
+      "compilerOptions": {
+        "target": "esnext",
+        "lib": ["dom", "dom.iterable", "esnext"],
+        "allowJs": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "strict": false,
+        "forceConsistentCasingInFileNames": true,
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": false,
+        "jsx": "react-jsx",
+        "baseUrl": ".",
+        "paths": {
           "@/*": ["./src/*"]
         }
       },
-      include: ["src/**/*"],
-      exclude: ["node_modules"]
-    }
+      "include": ["src/**/*"],
+      "exclude": ["node_modules"]
+    }`
   },
   // Override TypeScript configuration handling
   define: {
