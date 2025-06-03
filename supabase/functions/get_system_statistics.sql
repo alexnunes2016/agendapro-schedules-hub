@@ -8,15 +8,7 @@ SECURITY DEFINER
 AS $$
 DECLARE
   result json;
-  date_filter text;
 BEGIN
-  -- Construir filtro de data
-  IF start_date IS NOT NULL AND end_date IS NOT NULL THEN
-    date_filter := ' AND created_at BETWEEN ' || quote_literal(start_date) || ' AND ' || quote_literal(end_date);
-  ELSE
-    date_filter := '';
-  END IF;
-
   -- Estatísticas de usuários
   WITH user_stats AS (
     SELECT
@@ -31,13 +23,12 @@ BEGIN
         ELSE 0
       END), 0) as total_revenue_estimate,
       jsonb_object_agg(
-        plan,
+        COALESCE(plan, 'free'),
         COUNT(*)
       ) as plan_distribution
     FROM profiles
-    WHERE 1=1
-    || date_filter
-    GROUP BY 1
+    WHERE (start_date IS NULL OR created_at >= start_date)
+      AND (end_date IS NULL OR created_at <= end_date)
   )
   SELECT json_build_object(
     'total_users', total_users,

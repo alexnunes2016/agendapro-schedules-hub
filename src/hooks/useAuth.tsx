@@ -1,7 +1,6 @@
-
 import { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Session } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 import { useErrorHandler } from '@/utils/errorHandler';
 import { AuthContextType, UserProfile } from '@/types/auth';
 import { PermissionManager } from '@/utils/permissions';
@@ -34,7 +33,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
-      handleError(error, 'fetchProfile');
+      handleError(error instanceof Error ? error : new Error('Unknown error'), 'fetchProfile');
     }
   }, [handleError]);
 
@@ -48,7 +47,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     console.log('AuthProvider useEffect running...');
     let mounted = true;
 
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.id);
@@ -59,7 +57,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(session?.user ?? null);
           
           if (session?.user && event !== 'SIGNED_OUT') {
-            // Use timeout to avoid blocking UI
             setTimeout(() => {
               if (mounted) {
                 fetchProfile(session.user.id);
@@ -74,13 +71,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         } catch (error) {
           console.error('Error in auth state change:', error);
-          handleError(error, 'authStateChange');
+          handleError(error instanceof Error ? error : new Error('Unknown error'), 'authStateChange');
           setLoading(false);
         }
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       console.log('Initial session:', session?.user?.id);
       if (!mounted) return;
@@ -108,10 +104,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signIn = useCallback(async (email: string, password: string) => {
     console.log('Attempting sign in...');
     
-    // Check rate limiting before attempting login
     const canAttempt = await PermissionManager.checkRateLimit(email);
     if (!canAttempt) {
-      return { error: { message: 'Muitas tentativas de login. Tente novamente em alguns minutos.' } };
+      return { error: new Error('Muitas tentativas de login. Tente novamente em alguns minutos.') };
     }
 
     try {
@@ -120,24 +115,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         password,
       });
       
-      // Track the attempt
       await PermissionManager.trackAuthAttempt(email, 'login', !error);
       
-      return { error };
+      return { error: error ? new Error(error.message) : null };
     } catch (error) {
       await PermissionManager.trackAuthAttempt(email, 'login', false);
-      handleError(error, 'signIn');
-      return { error };
+      handleError(error instanceof Error ? error : new Error('Unknown error'), 'signIn');
+      return { error: error instanceof Error ? error : new Error('Unknown error') };
     }
   }, [handleError]);
 
-  const signUp = useCallback(async (email: string, password: string, userData: any) => {
+  const signUp = useCallback(async (email: string, password: string, userData: Partial<UserProfile>) => {
     console.log('Attempting sign up...');
     
-    // Check rate limiting for signup
     const canAttempt = await PermissionManager.checkRateLimit(email);
     if (!canAttempt) {
-      return { error: { message: 'Muitas tentativas de cadastro. Tente novamente em alguns minutos.' } };
+      return { error: new Error('Muitas tentativas de cadastro. Tente novamente em alguns minutos.') };
     }
 
     try {
@@ -150,14 +143,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       });
       
-      // Track the attempt
       await PermissionManager.trackAuthAttempt(email, 'signup', !error);
       
-      return { error };
+      return { error: error ? new Error(error.message) : null };
     } catch (error) {
       await PermissionManager.trackAuthAttempt(email, 'signup', false);
-      handleError(error, 'signUp');
-      return { error };
+      handleError(error instanceof Error ? error : new Error('Unknown error'), 'signUp');
+      return { error: error instanceof Error ? error : new Error('Unknown error') };
     }
   }, [handleError]);
 
@@ -167,7 +159,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await supabase.auth.signOut();
       setProfile(null);
     } catch (error) {
-      handleError(error, 'signOut');
+      handleError(error instanceof Error ? error : new Error('Unknown error'), 'signOut');
     }
   }, [handleError]);
 

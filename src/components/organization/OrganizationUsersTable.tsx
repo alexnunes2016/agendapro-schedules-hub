@@ -1,4 +1,3 @@
-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,12 +11,10 @@ import {
 
 interface OrganizationUser {
   id: string;
-  profiles: {
-    name: string;
-    email: string;
-    is_active: boolean;
-  };
+  name: string;
+  email: string;
   role: string;
+  organization_role: string;
   is_active: boolean;
   created_at: string;
 }
@@ -75,9 +72,9 @@ const OrganizationUsersTable = ({ users }: OrganizationUsersTableProps) => {
         <TableBody>
           {users.map((user) => (
             <TableRow key={user.id}>
-              <TableCell className="font-medium">{user.profiles?.name || 'N/A'}</TableCell>
-              <TableCell>{user.profiles?.email || 'N/A'}</TableCell>
-              <TableCell>{getRoleBadge(user.role)}</TableCell>
+              <TableCell className="font-medium">{user.name || 'N/A'}</TableCell>
+              <TableCell>{user.email || 'N/A'}</TableCell>
+              <TableCell>{getRoleBadge(user.organization_role)}</TableCell>
               <TableCell>{getStatusBadge(user.is_active)}</TableCell>
               <TableCell>{formatDate(user.created_at)}</TableCell>
               <TableCell>

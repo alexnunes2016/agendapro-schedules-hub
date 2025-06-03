@@ -1,27 +1,31 @@
+import { User } from '@supabase/supabase-js';
 
 // Definições centralizadas de tipos para autenticação
+export type PlanType = 'free' | 'basico' | 'profissional' | 'premium';
+export type UserRole = 'user' | 'admin';
+
 export interface UserProfile {
   id: string;
   name: string;
   email: string;
-  plan: 'free' | 'basico' | 'profissional' | 'premium';
-  role: 'user' | 'admin';
+  plan: PlanType;
+  role: UserRole;
   is_active: boolean;
   email_confirmed: boolean;
-  plan_expires_at?: string;
-  organization_id?: string;
-  clinic_name?: string;
-  service_type?: string;
+  plan_expires_at?: string | null;
+  organization_id?: string | null;
+  clinic_name?: string | null;
+  service_type?: string | null;
   created_at: string;
-  updated_at?: string;
+  updated_at?: string | null;
 }
 
 export interface AuthContextType {
-  user: any | null;
+  user: User | null;
   profile: UserProfile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error?: any }>;
-  signUp: (email: string, password: string, userData: any) => Promise<{ error?: any }>;
+  signIn: (email: string, password: string) => Promise<{ error?: Error | null }>;
+  signUp: (email: string, password: string, userData: Partial<UserProfile>) => Promise<{ error?: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   isAuthenticated: boolean;
@@ -29,8 +33,10 @@ export interface AuthContextType {
   isAdmin: boolean;
 }
 
+export type PermissionLevelType = 'user' | 'admin' | 'super_admin';
+
 export interface PermissionLevel {
-  level: 'user' | 'admin' | 'super_admin';
+  level: PermissionLevelType;
   canManageUsers: boolean;
   canDeleteUsers: boolean;
   canViewAllData: boolean;

@@ -33,7 +33,7 @@ import {
 
 import "./App.css";
 
-function App() {
+const App: React.FC = () => {
   console.log('App component rendering...');
 
   return (
@@ -70,6 +70,6 @@ function App() {
       </Router>
     </AuthProvider>
   );
-}
+};
 
 export default App;

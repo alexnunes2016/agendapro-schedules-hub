@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -40,11 +39,10 @@ export const useOrganizationUsers = () => {
         .from('organization_users')
         .select(`
           id,
-          user_id,
-          role as organization_role,
+          role,
           is_active,
           created_at,
-          profiles!inner (
+          user:user_id (
             id,
             name,
             email,
@@ -62,13 +60,13 @@ export const useOrganizationUsers = () => {
 
       // Transformar dados para formato esperado
       const transformedUsers = (data || []).map((item: any) => ({
-        id: item.profiles.id,
-        name: item.profiles.name,
-        email: item.profiles.email,
-        role: item.profiles.role,
-        is_active: item.profiles.is_active && item.is_active,
+        id: item.user.id,
+        name: item.user.name,
+        email: item.user.email,
+        role: item.user.role,
+        is_active: item.user.is_active && item.is_active,
         created_at: item.created_at,
-        organization_role: item.organization_role
+        organization_role: item.role
       }));
 
       setUsers(transformedUsers);
@@ -204,9 +202,9 @@ export const useOrganizationUsers = () => {
   return {
     users,
     loading,
-    fetchOrganizationUsers,
     inviteUser,
     removeUser,
-    updateUserRole
+    updateUserRole,
+    refreshUsers: fetchOrganizationUsers
   };
 };

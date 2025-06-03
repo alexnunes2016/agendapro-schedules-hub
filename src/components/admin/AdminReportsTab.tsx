@@ -57,18 +57,20 @@ const AdminReportsTab = () => {
 
       if (dateRange !== "custom") {
         const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
         switch (dateRange) {
           case "last_7_days":
-            filterStartDate = new Date(now.setDate(now.getDate() - 7)).toISOString().split('T')[0];
+            filterStartDate = new Date(today.setDate(today.getDate() - 7)).toISOString().split('T')[0];
             break;
           case "last_30_days":
-            filterStartDate = new Date(now.setDate(now.getDate() - 30)).toISOString().split('T')[0];
+            filterStartDate = new Date(today.setDate(today.getDate() - 30)).toISOString().split('T')[0];
             break;
           case "last_3_months":
-            filterStartDate = new Date(now.setMonth(now.getMonth() - 3)).toISOString().split('T')[0];
+            filterStartDate = new Date(today.setMonth(today.getMonth() - 3)).toISOString().split('T')[0];
             break;
           case "last_year":
-            filterStartDate = new Date(now.setFullYear(now.getFullYear() - 1)).toISOString().split('T')[0];
+            filterStartDate = new Date(today.setFullYear(today.getFullYear() - 1)).toISOString().split('T')[0];
             break;
           default:
             filterStartDate = null;
@@ -78,35 +80,52 @@ const AdminReportsTab = () => {
       }
 
       const { data: statsData, error } = await supabase.rpc('get_system_statistics', {
-        start_date: filterStartDate || null,
-        end_date: filterEndDate || null
-      } as any);
+        start_date: filterStartDate,
+        end_date: filterEndDate
+      });
 
-      if (error) throw error;
-
-      if (statsData && typeof statsData === 'object') {
-        const rawStats = statsData as Record<string, any>;
-        
-        const newStats: SystemStats = {
-          total_users: Number(rawStats.total_users || 0),
-          active_users: Number(rawStats.active_users || 0),
-          inactive_users: Number(rawStats.inactive_users || 0),
-          new_users_this_month: Number(rawStats.new_users_this_month || 0),
-          total_revenue_estimate: Number(rawStats.total_revenue_estimate || 0),
-          plan_distribution: rawStats.plan_distribution || {},
-          total_appointments: 0,
-          appointments_this_month: 0
-        };
-
-        setStats(newStats);
+      if (error) {
+        console.error('Error from Supabase:', error);
+        throw new Error(error.message);
       }
+
+      if (!statsData) {
+        throw new Error('No data received from the server');
+      }
+
+      // Check if the response contains an error message
+      if (statsData.error) {
+        toast({
+          title: "Erro de Permissão",
+          description: statsData.message || "Você não tem permissão para acessar este relatório",
+          variant: "destructive",
+        });
+        setStats(null);
+        return;
+      }
+
+      const rawStats = statsData as Record<string, any>;
+      
+      const newStats: SystemStats = {
+        total_users: Number(rawStats.total_users || 0),
+        active_users: Number(rawStats.active_users || 0),
+        inactive_users: Number(rawStats.inactive_users || 0),
+        new_users_this_month: Number(rawStats.new_users_this_month || 0),
+        total_revenue_estimate: Number(rawStats.total_revenue_estimate || 0),
+        plan_distribution: rawStats.plan_distribution || {},
+        total_appointments: Number(rawStats.total_appointments || 0),
+        appointments_this_month: Number(rawStats.appointments_this_month || 0)
+      };
+
+      setStats(newStats);
     } catch (error: any) {
       console.error('Error fetching system stats:', error);
       toast({
         title: "Erro ao carregar estatísticas",
-        description: "Não foi possível carregar as estatísticas do sistema",
+        description: error.message || "Não foi possível carregar as estatísticas do sistema",
         variant: "destructive",
       });
+      setStats(null);
     } finally {
       setLoading(false);
     }

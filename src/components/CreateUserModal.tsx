@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,7 @@ const CreateUserModal = () => {
     email: "",
     role: "member"
   });
-  const { createUser } = useOrganizationUsers();
+  const { inviteUser } = useOrganizationUsers();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,11 +28,9 @@ const CreateUserModal = () => {
     console.log('Submitting form with data:', formData);
     
     try {
-      const success = await createUser(formData);
-      if (success) {
-        setOpen(false);
-        setFormData({ name: "", email: "", role: "member" });
-      }
+      await inviteUser(formData.email, formData.name, formData.role);
+      setOpen(false);
+      setFormData({ name: "", email: "", role: "member" });
     } catch (error) {
       console.error('Error in form submission:', error);
     } finally {
