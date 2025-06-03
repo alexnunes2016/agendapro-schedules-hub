@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +17,7 @@ import {
   Globe,
   ArrowLeft
 } from "lucide-react";
+import Header from "@/components/Header";
 
 const Features = () => {
   const features = [
@@ -140,22 +140,8 @@ const Features = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar à Home
-              </Button>
-            </Link>
-            <Link to="/register">
-              <Button>Teste Grátis</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* Use the main Header component */}
+      <Header />
 
       {/* Hero Section */}
       <section className="py-20">
