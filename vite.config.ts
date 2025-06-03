@@ -37,6 +37,21 @@ export default defineConfig(({ mode }) => ({
   },
   esbuild: {
     target: 'esnext',
-    logOverride: { 'this-is-undefined-in-esm': 'silent' }
+    logOverride: { 
+      'this-is-undefined-in-esm': 'silent'
+    },
+    // Ignore TypeScript configuration errors
+    tsconfigRaw: {
+      compilerOptions: {
+        skipLibCheck: true,
+        allowSyntheticDefaultImports: true,
+        esModuleInterop: true,
+        jsx: "react-jsx"
+      }
+    }
+  },
+  // Override TypeScript configuration handling
+  define: {
+    global: 'globalThis',
   }
 }));
