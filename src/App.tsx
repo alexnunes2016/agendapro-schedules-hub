@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,22 +29,6 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AuthProvider>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
-};
-
 const AppRoutes = () => {
   const { user, loading } = useAuth();
 
@@ -57,13 +42,11 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      {/* Public routes */}
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/booking/:userId" element={<BookingPublic />} />
 
-      {/* Protected routes */}
       {user ? (
         <>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -82,6 +65,22 @@ const AppRoutes = () => {
         <Route path="*" element={<Navigate to="/login" replace />} />
       )}
     </Routes>
+  );
+};
+
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AuthProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 };
 
