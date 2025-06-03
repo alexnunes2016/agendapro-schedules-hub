@@ -4,43 +4,53 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface EditUserModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  } | null;
+  user: any;
   onSuccess: () => void;
 }
 
 const EditUserModal = ({ open, onOpenChange, user, onSuccess }: EditUserModalProps) => {
-  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || "",
-    email: user?.email || ""
+    name: '',
+    email: '',
+    plan: 'free',
+    clinic_name: '',
+    service_type: ''
   });
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        plan: user.plan || 'free',
+        clinic_name: user.clinic_name || '',
+        service_type: user.service_type || ''
+      });
+    }
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!user || !formData.name.trim() || !formData.email.trim()) {
-      return;
-    }
+    if (!user) return;
 
     setLoading(true);
-    
     try {
       const { error } = await supabase
         .from('profiles')
         .update({
           name: formData.name,
-          email: formData.email,
+          plan: formData.plan,
+          clinic_name: formData.clinic_name,
+          service_type: formData.service_type,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -48,8 +58,8 @@ const EditUserModal = ({ open, onOpenChange, user, onSuccess }: EditUserModalPro
       if (error) throw error;
 
       toast({
-        title: "Usuário Atualizado",
-        description: `Dados de ${formData.name} foram atualizados com sucesso`,
+        title: "Usuário atualizado",
+        description: "As informações do usuário foram atualizadas com sucesso",
       });
 
       onSuccess();
@@ -57,8 +67,8 @@ const EditUserModal = ({ open, onOpenChange, user, onSuccess }: EditUserModalPro
     } catch (error: any) {
       console.error('Error updating user:', error);
       toast({
-        title: "Erro",
-        description: "Erro ao atualizar dados do usuário",
+        title: "Erro ao atualizar usuário",
+        description: error.message,
         variant: "destructive",
       });
     } finally {
@@ -66,52 +76,74 @@ const EditUserModal = ({ open, onOpenChange, user, onSuccess }: EditUserModalPro
     }
   };
 
-  // Update form data when user changes
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name,
-        email: user.email
-      });
-    }
-  }, [user]);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Editar Usuário</DialogTitle>
         </DialogHeader>
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="name">Nome *</Label>
+            <Label htmlFor="name">Nome</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Digite o nome completo"
               required
-              disabled={loading}
             />
           </div>
+
           <div>
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              placeholder="Digite o email"
-              required
-              disabled={loading}
+              disabled
+              className="bg-gray-100"
             />
           </div>
-          <div className="flex space-x-2">
-            <Button type="submit" className="flex-1" disabled={loading}>
-              {loading ? "Salvando..." : "Salvar Alterações"}
-            </Button>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+
+          <div>
+            <Label htmlFor="plan">Plano</Label>
+            <Select value={formData.plan} onValueChange={(value) => setFormData(prev => ({ ...prev, plan: value }))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="free">14 dias teste</SelectItem>
+                <SelectItem value="basico">Básico</SelectItem>
+                <SelectItem value="profissional">Profissional</SelectItem>
+                <SelectItem value="premium">Premium</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="clinic_name">Nome da Clínica</Label>
+            <Input
+              id="clinic_name"
+              value={formData.clinic_name}
+              onChange={(e) => setFormData(prev => ({ ...prev, clinic_name: e.target.value }))}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="service_type">Tipo de Serviço</Label>
+            <Input
+              id="service_type"
+              value={formData.service_type}
+              onChange={(e) => setFormData(prev => ({ ...prev, service_type: e.target.value }))}
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
         </form>

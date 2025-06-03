@@ -1,21 +1,23 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from './use-toast';
 
 interface AdminStats {
-  totalUsers: number;
-  activeSubscriptions: number;
-  monthlyRevenue: number;
-  newUsersThisMonth: number;
+  total_users: number;
+  active_users: number;
+  inactive_users: number;
+  new_users_this_month: number;
+  total_revenue_estimate: number;
+  plan_distribution: Record<string, number>;
+  total_appointments: number;
+  appointments_this_month: number;
 }
 
 export const useAdminStats = (isAdmin: boolean) => {
-  const [adminStats, setAdminStats] = useState<AdminStats>({
-    totalUsers: 0,
-    activeSubscriptions: 0,
-    monthlyRevenue: 0,
-    newUsersThisMonth: 0
-  });
+  const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isAdmin) {
@@ -25,40 +27,36 @@ export const useAdminStats = (isAdmin: boolean) => {
 
   const fetchAdminStats = async () => {
     try {
-      // Buscar estatísticas dos usuários
-      const { data: users, error: usersError } = await (supabase as any)
-        .from('profiles')
-        .select('plan, created_at');
+      setLoading(true);
+      const { data, error } = await supabase.rpc('get_system_statistics');
 
-      if (usersError) throw usersError;
+      if (error) throw error;
 
-      const totalUsers = users?.length || 0;
-      const activeSubscriptions = users?.filter(u => u.plan !== 'free').length || 0;
-      
-      // Calcular usuários novos este mês
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-      const newUsersThisMonth = users?.filter(u => {
-        const userDate = new Date(u.created_at);
-        return userDate.getMonth() === currentMonth && userDate.getFullYear() === currentYear;
-      }).length || 0;
-
-      // Estimativa de receita mensal (valores dos planos)
-      const planValues = { basico: 49.90, profissional: 129.90, premium: 299.90 };
-      const monthlyRevenue = users?.reduce((total, user) => {
-        return total + (planValues[user.plan as keyof typeof planValues] || 0);
-      }, 0) || 0;
-
-      setAdminStats({
-        totalUsers,
-        activeSubscriptions,
-        monthlyRevenue,
-        newUsersThisMonth
+      setAdminStats(data || {
+        total_users: 0,
+        active_users: 0,
+        inactive_users: 0,
+        new_users_this_month: 0,
+        total_revenue_estimate: 0,
+        plan_distribution: {},
+        total_appointments: 0,
+        appointments_this_month: 0
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching admin stats:', error);
+      toast({
+        title: "Erro ao carregar estatísticas",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  return { adminStats };
+  return {
+    adminStats,
+    loading,
+    refetch: fetchAdminStats
+  };
 };

@@ -1,42 +1,40 @@
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import type { Json } from '@/integrations/supabase/types';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuditLog {
   id: string;
+  user_id: string;
   action: string;
-  table_name: string | null;
-  record_id: string | null;
-  old_values: Json | null;
-  new_values: Json | null;
-  user_id: string | null;
-  timestamp: string | null;
-  ip_address: unknown | null;
-  user_agent: string | null;
+  table_name: string;
+  record_id: string;
+  old_values: any;
+  new_values: any;
+  ip_address: string;
+  user_agent: string;
+  timestamp: string;
 }
 
 const AuditLogsViewer = () => {
-  const { isSuperAdmin, loading: superAdminLoading } = useSuperAdminCheck();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [actionFilter, setActionFilter] = useState("all");
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!superAdminLoading && isSuperAdmin) {
-      fetchAuditLogs();
-    } else if (!superAdminLoading && !isSuperAdmin) {
-      setLoading(false);
-    }
-  }, [isSuperAdmin, superAdminLoading]);
+    fetchAuditLogs();
+  }, []);
 
   const fetchAuditLogs = async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('audit_logs')
         .select('*')
@@ -48,8 +46,8 @@ const AuditLogsViewer = () => {
     } catch (error: any) {
       console.error('Error fetching audit logs:', error);
       toast({
-        title: "Erro",
-        description: "Erro ao carregar logs de auditoria",
+        title: "Erro ao carregar logs de auditoria",
+        description: error.message,
         variant: "destructive",
       });
     } finally {
@@ -57,49 +55,40 @@ const AuditLogsViewer = () => {
     }
   };
 
-  const formatTimestamp = (timestamp: string | null) => {
-    if (!timestamp) return 'N/A';
-    return new Date(timestamp).toLocaleString('pt-BR');
-  };
-
-  const formatIpAddress = (ip: unknown) => {
-    if (!ip) return 'N/A';
-    return String(ip);
-  };
+  const filteredLogs = logs.filter(log => {
+    const matchesSearch = log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (log.table_name || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesAction = actionFilter === "all" || log.action === actionFilter;
+    return matchesSearch && matchesAction;
+  });
 
   const getActionBadge = (action: string) => {
-    const colorMap: Record<string, string> = {
-      'password_reset': 'bg-orange-100 text-orange-800',
-      'plan_change': 'bg-blue-100 text-blue-800',
-      'user_delete': 'bg-red-100 text-red-800',
-      'user_create': 'bg-green-100 text-green-800',
-      'user_update': 'bg-yellow-100 text-yellow-800'
+    const colors = {
+      INSERT: "bg-green-100 text-green-800",
+      UPDATE: "bg-blue-100 text-blue-800",
+      DELETE: "bg-red-100 text-red-800",
+      SELECT: "bg-gray-100 text-gray-800"
     };
-
+    
     return (
-      <Badge className={colorMap[action] || 'bg-gray-100 text-gray-800'}>
+      <Badge className={`${colors[action as keyof typeof colors] || colors.SELECT} hover:bg-current`}>
         {action}
       </Badge>
     );
   };
 
-  if (superAdminLoading || loading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center">Carregando logs de auditoria...</div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('pt-BR');
+  };
 
-  if (!isSuperAdmin) {
+  if (loading) {
     return (
       <Card>
-        <CardContent className="p-6">
-          <div className="text-center text-red-600">
-            Acesso negado. Apenas super administradores podem visualizar logs de auditoria.
-          </div>
+        <CardHeader>
+          <CardTitle>Logs de Auditoria</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">Carregando logs...</div>
         </CardContent>
       </Card>
     );
@@ -109,44 +98,57 @@ const AuditLogsViewer = () => {
     <Card>
       <CardHeader>
         <CardTitle>Logs de Auditoria</CardTitle>
+        <div className="flex space-x-4">
+          <Input
+            placeholder="Buscar por ação ou tabela..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
+          <Select value={actionFilter} onValueChange={setActionFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as ações</SelectItem>
+              <SelectItem value="INSERT">Inserções</SelectItem>
+              <SelectItem value="UPDATE">Atualizações</SelectItem>
+              <SelectItem value="DELETE">Exclusões</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent>
-        {logs.length === 0 ? (
-          <div className="text-center text-gray-500">
-            Nenhum log de auditoria encontrado.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data/Hora</TableHead>
-                  <TableHead>Ação</TableHead>
-                  <TableHead>Tabela</TableHead>
-                  <TableHead>ID do Registro</TableHead>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>IP</TableHead>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Data/Hora</TableHead>
+                <TableHead>Ação</TableHead>
+                <TableHead>Tabela</TableHead>
+                <TableHead>Usuário</TableHead>
+                <TableHead>IP</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredLogs.map((log) => (
+                <TableRow key={log.id}>
+                  <TableCell>{formatDate(log.timestamp)}</TableCell>
+                  <TableCell>{getActionBadge(log.action)}</TableCell>
+                  <TableCell className="font-mono text-sm">{log.table_name}</TableCell>
+                  <TableCell>{log.user_id}</TableCell>
+                  <TableCell>{log.ip_address}</TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {logs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell>{formatTimestamp(log.timestamp)}</TableCell>
-                    <TableCell>{getActionBadge(log.action)}</TableCell>
-                    <TableCell>{log.table_name || 'N/A'}</TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {log.record_id ? `${log.record_id.substring(0, 8)}...` : 'N/A'}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {log.user_id ? `${log.user_id.substring(0, 8)}...` : 'N/A'}
-                    </TableCell>
-                    <TableCell>{formatIpAddress(log.ip_address)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+              ))}
+            </TableBody>
+          </Table>
+          
+          {filteredLogs.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              Nenhum log encontrado
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

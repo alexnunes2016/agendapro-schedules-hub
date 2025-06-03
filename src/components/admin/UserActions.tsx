@@ -1,99 +1,146 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Bell, Lock, Trash2, Key, CheckCircle, Calendar, Edit } from "lucide-react";
+import { MoreHorizontal, Edit, Shield, ShieldCheck, Mail, Key, Calendar, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface UserActionsProps {
   user: {
     id: string;
     name: string;
     email: string;
-    email_confirmed: boolean;
     is_active: boolean;
+    email_confirmed: boolean;
   };
-  onSendNotification: (userId: string, userName: string) => void;
   onToggleStatus: (userId: string, currentStatus: boolean, userName: string) => void;
-  onDeleteUser: (userId: string, userName: string) => void;
+  onSendNotification: (userId: string, userName: string) => void;
   onResetPassword: (userId: string, userName: string) => void;
   onToggleEmailConfirmation: (userId: string, userName: string, currentStatus: boolean) => void;
   onEditPlanExpiration: (userId: string, userName: string) => void;
+  onDeleteUser: (userId: string) => void;
   onEditUser: (userId: string, userName: string) => void;
   isSuperAdmin: boolean;
 }
 
-const UserActions = ({ 
+const UserActions = ({
   user,
-  onSendNotification, 
-  onToggleStatus, 
-  onDeleteUser,
+  onToggleStatus,
+  onSendNotification,
   onResetPassword,
   onToggleEmailConfirmation,
   onEditPlanExpiration,
+  onDeleteUser,
   onEditUser,
-  isSuperAdmin 
+  isSuperAdmin
 }: UserActionsProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <div className="flex items-center justify-end space-x-2">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => onSendNotification(user.id, user.name)}
-        title="Enviar notificação"
-      >
-        <Bell className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => onToggleStatus(user.id, user.is_active, user.name)}
-        title="Bloquear/Desbloquear usuário"
-      >
-        <Lock className="h-4 w-4 text-orange-500" />
-      </Button>
-      {isSuperAdmin && (
-        <>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onEditUser(user.id, user.name)}
-            title="Editar nome e email"
-          >
-            <Edit className="h-4 w-4 text-blue-500" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onResetPassword(user.id, user.name)}
-            title="Resetar senha"
-          >
-            <Key className="h-4 w-4 text-blue-500" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onToggleEmailConfirmation(user.id, user.name, user.email_confirmed)}
-            title={user.email_confirmed ? "Desconfirmar email" : "Confirmar email"}
-          >
-            <CheckCircle className={`h-4 w-4 ${user.email_confirmed ? 'text-green-500' : 'text-gray-400'}`} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onEditPlanExpiration(user.id, user.name)}
-            title="Editar expiração do plano"
-          >
-            <Calendar className="h-4 w-4 text-purple-500" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDeleteUser(user.id, user.name)}
-            title="Excluir usuário"
-          >
-            <Trash2 className="h-4 w-4 text-red-500" />
-          </Button>
-        </>
-      )}
-    </div>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Abrir menu</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem
+          onClick={() => {
+            onEditUser(user.id, user.name);
+            setIsOpen(false);
+          }}
+        >
+          <Edit className="mr-2 h-4 w-4" />
+          Editar Usuário
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          onClick={() => {
+            onToggleStatus(user.id, user.is_active, user.name);
+            setIsOpen(false);
+          }}
+        >
+          {user.is_active ? (
+            <>
+              <Shield className="mr-2 h-4 w-4" />
+              Desativar
+            </>
+          ) : (
+            <>
+              <ShieldCheck className="mr-2 h-4 w-4" />
+              Ativar
+            </>
+          )}
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          onClick={() => {
+            onSendNotification(user.id, user.name);
+            setIsOpen(false);
+          }}
+        >
+          <Mail className="mr-2 h-4 w-4" />
+          Enviar Notificação
+        </DropdownMenuItem>
+
+        {isSuperAdmin && (
+          <>
+            <DropdownMenuSeparator />
+            
+            <DropdownMenuItem
+              onClick={() => {
+                onResetPassword(user.id, user.name);
+                setIsOpen(false);
+              }}
+            >
+              <Key className="mr-2 h-4 w-4" />
+              Resetar Senha
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={() => {
+                onToggleEmailConfirmation(user.id, user.name, user.email_confirmed);
+                setIsOpen(false);
+              }}
+            >
+              <Mail className="mr-2 h-4 w-4" />
+              {user.email_confirmed ? 'Desconfirmar' : 'Confirmar'} Email
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={() => {
+                onEditPlanExpiration(user.id, user.name);
+                setIsOpen(false);
+              }}
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              Editar Expiração
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+            
+            <DropdownMenuItem
+              onClick={() => {
+                if (confirm(`Tem certeza que deseja excluir ${user.name}?`)) {
+                  onDeleteUser(user.id);
+                }
+                setIsOpen(false);
+              }}
+              className="text-red-600"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Excluir Usuário
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

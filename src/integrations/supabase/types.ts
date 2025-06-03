@@ -742,7 +742,9 @@ export type Database = {
         Returns: number
       }
       get_system_statistics: {
-        Args: Record<PropertyKey, never>
+        Args:
+          | Record<PropertyKey, never>
+          | { start_date?: string; end_date?: string }
         Returns: Json
       }
       has_role: {

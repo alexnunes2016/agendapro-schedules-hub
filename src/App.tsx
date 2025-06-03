@@ -1,74 +1,79 @@
-import React, { Suspense } from 'react';
-import { Toaster } from "@/components/ui/toaster";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
-import { PageLoader } from "@/components/ui/loading-spinner";
 
-// Regular imports for essential pages
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import BookingPublic from "./pages/BookingPublic";
-import NotFound from "./pages/NotFound";
-import Upgrade from "./pages/Upgrade";
-import OrganizationUsers from "./pages/OrganizationUsers";
+import Dashboard from "./pages/Dashboard";
+import Settings from "./pages/Settings";
 import CalendarSettings from "./pages/CalendarSettings";
-import NotificationSettings from "./pages/NotificationSettings";
-import Features from "./pages/Features";
-import PricingPage from "./pages/Pricing";
-import Demo from "./pages/Demo";
+import Services from "./pages/Services";
+import Appointments from "./pages/Appointments";
 import Reports from "./pages/Reports";
+import OrganizationUsers from "./pages/OrganizationUsers";
+import AppearanceSettings from "./pages/AppearanceSettings";
+import AdminDashboard from "./pages/AdminDashboard";
+import PublicBooking from "./pages/PublicBooking";
+import Upgrade from "./pages/Upgrade";
 
-// Lazy loaded pages
-import { 
-  LazyDashboard,
-  LazyAppointments,
-  LazyServices,
-  LazyClients,
-  LazyMedicalRecords,
-  LazyAdminDashboard,
-  LazySystemSettings,
-  LazySettings
-} from "@/utils/performance";
+const queryClient = new QueryClient();
 
-import "./App.css";
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
-const App: React.FC = () => {
-  console.log('App component rendering...');
+const AppRoutes = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
-    <AuthProvider>
-      <Router>
-        <div className="min-h-screen bg-background">
-          <Suspense fallback={<PageLoader text="Carregando página..." />}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/funcionalidades" element={<Features />} />
-              <Route path="/precos" element={<PricingPage />} />
-              <Route path="/demonstracao" element={<Demo />} />
-              <Route path="/dashboard" element={<LazyDashboard />} />
-              <Route path="/appointments" element={<LazyAppointments />} />
-              <Route path="/booking/:userId" element={<BookingPublic />} />
-              <Route path="/services" element={<LazyServices />} />
-              <Route path="/settings" element={<LazySettings />} />
-              <Route path="/upgrade" element={<Upgrade />} />
-              <Route path="/clients" element={<LazyClients />} />
-              <Route path="/admin" element={<LazyAdminDashboard />} />
-              <Route path="/medical-records" element={<LazyMedicalRecords />} />
-              <Route path="/system-settings" element={<LazySystemSettings />} />
-              <Route path="/organization/users" element={<OrganizationUsers />} />
-              <Route path="/settings/calendars" element={<CalendarSettings />} />
-              <Route path="/settings/notifications" element={<NotificationSettings />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-          <Toaster />
-        </div>
-      </Router>
-    </AuthProvider>
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<Index />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/booking/:userId" element={<PublicBooking />} />
+
+      {/* Protected routes */}
+      {user ? (
+        <>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/settings/calendar" element={<CalendarSettings />} />
+          <Route path="/settings/organization-users" element={<OrganizationUsers />} />
+          <Route path="/settings/appearance" element={<AppearanceSettings />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/appointments" element={<Appointments />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/upgrade" element={<Upgrade />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </>
+      ) : (
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      )}
+    </Routes>
   );
 };
 

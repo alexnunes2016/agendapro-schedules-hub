@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { PermissionManager } from "@/utils/permissions";
 
 const AppearanceSettings = () => {
   const navigate = useNavigate();
@@ -16,7 +17,6 @@ const AppearanceSettings = () => {
   const { 
     settings, 
     loading, 
-    isSuperAdmin, 
     getSetting, 
     updateSetting 
   } = useAppearanceSettings();
@@ -32,6 +32,14 @@ const AppearanceSettings = () => {
     dashboard_theme: 'light'
   });
 
+  const isSuperAdmin = PermissionManager.isSuperAdminSync(profile);
+
+  useEffect(() => {
+    if (!authLoading && !isSuperAdmin) {
+      navigate("/dashboard");
+    }
+  }, [authLoading, isSuperAdmin, navigate]);
+
   useEffect(() => {
     if (settings.length > 0) {
       setFormData({
@@ -45,7 +53,7 @@ const AppearanceSettings = () => {
         dashboard_theme: getSetting('dashboard_theme', 'light')
       });
     }
-  }, [settings]);
+  }, [settings, getSetting]);
 
   if (authLoading || loading) {
     return (
@@ -59,8 +67,21 @@ const AppearanceSettings = () => {
   }
 
   if (!isSuperAdmin) {
-    navigate("/dashboard");
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white mb-4">
+            Acesso Negado
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
+            Apenas superadmins podem acessar configurações de aparência.
+          </p>
+          <Link to="/dashboard">
+            <Button className="w-full sm:w-auto">Voltar ao Dashboard</Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const handleSave = async () => {
@@ -73,8 +94,7 @@ const AppearanceSettings = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Implementar upload de arquivo real aqui
-    // Por enquanto, apenas simular URL
+    // Simular URL - em produção seria feito upload real
     const fakeUrl = `https://exemplo.com/${type}/${file.name}`;
     
     if (type === 'logo') {
