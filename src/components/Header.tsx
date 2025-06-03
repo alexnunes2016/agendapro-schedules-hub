@@ -31,7 +31,7 @@ const Header = () => {
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-3 lg:space-x-4">
             <Link to="/login">
-              <Button variant="ghost" size="sm">Entrar</Button>
+              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">Entrar</Button>
             </Link>
             <Link to="/register">
               <Button size="sm">Teste Grátis</Button>
@@ -75,7 +75,7 @@ const Header = () => {
               </Link>
               <div className="flex flex-col space-y-2 pt-3 border-t">
                 <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                  <Button variant="ghost" className="w-full justify-start" size="sm">Entrar</Button>
+                  <Button variant="ghost" className="w-full justify-start text-blue-600 hover:text-blue-700" size="sm">Entrar</Button>
                 </Link>
                 <Link to="/register" onClick={() => setIsMenuOpen(false)}>
                   <Button className="w-full" size="sm">Teste Grátis</Button>
