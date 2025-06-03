@@ -50,7 +50,7 @@ export default defineConfig(({ mode }) => ({
   },
   // Disable TypeScript checking to avoid project reference issues
   typescript: {
-    check: false,
-    build: false
+    check: true,
+    build: true
   }
 }));
