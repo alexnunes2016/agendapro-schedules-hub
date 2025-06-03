@@ -17,7 +17,7 @@ import Reports from "./pages/Reports";
 import OrganizationUsers from "./pages/OrganizationUsers";
 import AppearanceSettings from "./pages/AppearanceSettings";
 import AdminDashboard from "./pages/AdminDashboard";
-import PublicBooking from "./pages/PublicBooking";
+import BookingPublic from "./pages/BookingPublic";
 import Upgrade from "./pages/Upgrade";
 
 const queryClient = new QueryClient();
@@ -53,7 +53,7 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/booking/:userId" element={<PublicBooking />} />
+      <Route path="/booking/:userId" element={<BookingPublic />} />
 
       {/* Protected routes */}
       {user ? (
