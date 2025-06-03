@@ -16,7 +16,11 @@
     
     <!-- Chatwoot Script -->
     <script>
-      window.chatwootSettings = {"position":"right","type":"standard","launcherTitle":"Fale conosco no chat"};
+      window.chatwootSettings = {
+        "position": "right",
+        "type": "standard",
+        "launcherTitle": "Fale conosco no chat"
+      };
       (function(d,t) {
         var BASE_URL="https://mychatapp.judahtech.com.br";
         var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
@@ -28,7 +32,21 @@
           window.chatwootSDK.run({
             websiteToken: 'JAvi8jMPBWqUTj4D7p5gBh65',
             baseUrl: BASE_URL
-          })
+          });
+          // Adiciona estilo para opacidade
+          setTimeout(() => {
+            const style = document.createElement('style');
+            style.textContent = `
+              .woot-widget-bubble {
+                opacity: 0.7;
+                transition: opacity 0.3s ease;
+              }
+              .woot-widget-bubble:hover {
+                opacity: 1;
+              }
+            `;
+            document.head.appendChild(style);
+          }, 1000);
         }
       })(document,"script");
     </script>
