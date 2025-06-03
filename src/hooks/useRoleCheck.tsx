@@ -14,52 +14,70 @@ export const useRoleCheck = () => {
         return;
       }
 
-      if (!user) {
-        setHasRole({});
+      if (!user || !profile) {
+        console.log('No user or profile, setting default roles');
+        setHasRole({
+          super_admin: false,
+          admin: false,
+          user: false
+        });
         setLoading(false);
         return;
       }
 
       try {
-        console.log('Checking user roles for:', user.id);
+        console.log('Checking user roles for:', user.id, 'Profile:', profile);
 
-        // Use the new user_roles table with the security definer functions
+        // Check if user is the super admin based on email and role
+        const isSuperAdmin = profile.email === 'suporte@judahtech.com.br' && profile.role === 'admin';
+        const isAdmin = profile.role === 'admin';
+        
+        console.log('Role check results:', { isSuperAdmin, isAdmin, profileRole: profile.role });
+
+        // Also check user_roles table for additional roles
         const { data: userRoles, error } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', user.id);
 
-        if (error) {
-          console.error('Error fetching user roles:', error);
-          // Fallback to profile-based checks for backward compatibility
-          const isSuperAdmin = profile?.email === 'suporte@judahtech.com.br' && profile?.role === 'admin';
-          const isAdmin = profile?.role === 'admin';
+        if (!error && userRoles) {
+          const roles = userRoles.map(r => r.role) || [];
+          console.log('Additional roles from user_roles table:', roles);
           
           setHasRole({
-            super_admin: isSuperAdmin || false,
-            admin: isAdmin || false,
+            super_admin: isSuperAdmin || roles.includes('super_admin'),
+            admin: isAdmin || roles.includes('admin') || roles.includes('super_admin'),
             user: true
           });
         } else {
-          const roles = userRoles?.map(r => r.role) || [];
-          
+          console.log('Using profile-based role check only');
           setHasRole({
-            super_admin: roles.includes('super_admin'),
-            admin: roles.includes('admin') || roles.includes('super_admin'),
-            user: roles.includes('user') || roles.length > 0 || true
+            super_admin: isSuperAdmin,
+            admin: isAdmin,
+            user: true
           });
         }
 
         setLoading(false);
       } catch (error) {
         console.error('Error checking roles:', error);
-        setHasRole({});
+        // Fallback to profile-based checks
+        const isSuperAdmin = profile?.email === 'suporte@judahtech.com.br' && profile?.role === 'admin';
+        const isAdmin = profile?.role === 'admin';
+        
+        setHasRole({
+          super_admin: isSuperAdmin || false,
+          admin: isAdmin || false,
+          user: true
+        });
         setLoading(false);
       }
     };
 
     checkRoles();
   }, [user, profile, authLoading]);
+
+  console.log('useRoleCheck result:', { hasRole, loading, userId: user?.id });
 
   return {
     hasRole,

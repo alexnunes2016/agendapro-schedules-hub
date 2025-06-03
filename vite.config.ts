@@ -28,9 +28,6 @@ export default defineConfig(({ mode }) => ({
     target: 'esnext',
     minify: 'esbuild',
     sourcemap: false,
-    commonjsOptions: {
-      include: [/jspdf/, /node_modules/]
-    },
     rollupOptions: {
       external: [],
       output: {

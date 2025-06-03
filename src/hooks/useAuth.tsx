@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
@@ -16,6 +15,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchProfile = useCallback(async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
       
       if (!error && data) {
+        console.log('Profile loaded successfully:', data);
         setProfile(data as UserProfile);
       } else if (error) {
         console.error('Error fetching profile:', error);
@@ -42,21 +43,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let mounted = true;
+    console.log('Setting up auth state listener');
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
+        console.log('Auth state changed:', event, session?.user?.id);
 
         try {
           setUser(session?.user ?? null);
           
           if (session?.user && event !== 'SIGNED_OUT') {
+            console.log('User signed in, fetching profile');
             setTimeout(() => {
               if (mounted) {
                 fetchProfile(session.user.id);
               }
-            }, 0);
+            }, 100);
           } else {
+            console.log('User signed out, clearing profile');
             setProfile(null);
           }
           
@@ -81,6 +86,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       
+      console.log('Initial session:', session?.user?.id);
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
@@ -154,6 +160,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = Boolean(user && profile);
   const isSuperAdmin = PermissionManager.isSuperAdminSync(profile);
   const isAdmin = PermissionManager.isAdminSync(profile);
+
+  console.log('Auth Context State:', { 
+    user: user?.id, 
+    profile: profile?.id, 
+    isAuthenticated, 
+    isSuperAdmin, 
+    isAdmin,
+    loading 
+  });
 
   return (
     <AuthContext.Provider value={{
