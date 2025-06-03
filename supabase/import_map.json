@@ -1,0 +1,11 @@
+{
+  "imports": {
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.0",
+    "axios": "https://esm.sh/axios@1.6.2",
+    "date-fns": "https://esm.sh/date-fns@2.30.0",
+    "zod": "https://esm.sh/zod@3.22.4",
+    "@/lib/": "./lib/",
+    "@/utils/": "./utils/",
+    "@/types/": "./types/"
+  }
+} 

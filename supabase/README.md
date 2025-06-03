@@ -1,45 +1,119 @@
-# Database Migration Instructions
+# Supabase Configuration
 
-## Overview
-This directory contains the database schema, Row Level Security (RLS) policies, and system functions for the AgendaPro Schedules Hub application.
+Este diretório contém todas as configurações e recursos do Supabase para o AgendoPro.
 
-## Migration Files
-- `combined_migrations.sql`: Contains all database changes including:
-  - Table creation and relationships
-  - Row Level Security policies
-  - Helper functions and triggers
-  - System statistics function
+## Estrutura
 
-## How to Apply Migrations
-
-### Option 1: Using Supabase Dashboard (Recommended)
-1. Log in to your Supabase project dashboard
-2. Go to SQL Editor
-3. Click "New Query"
-4. Copy the contents of `combined_migrations.sql`
-5. Paste into the SQL Editor
-6. Click "Run" to execute the migrations
-
-### Option 2: Using psql (Alternative)
-If you have direct database access:
-
-```bash
-psql "postgres://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres" -f combined_migrations.sql
+```
+supabase/
+├── config.toml           # Configuração principal do Supabase
+├── import_map.json      # Mapa de importação para Edge Functions
+├── functions/           # Edge Functions do Supabase
+│   ├── types/          # Tipos compartilhados
+│   └── utils/          # Utilitários compartilhados
+├── migrations/         # Migrações do banco de dados
+└── README.md          # Esta documentação
 ```
 
-## Verification
-After applying migrations, verify:
-1. All tables are created in the public schema
-2. RLS is enabled on all tables
-3. Policies are correctly applied
-4. Helper functions are available
-5. System statistics function is accessible to authenticated users
+## Configurações
+
+### Autenticação
+
+- JWT expira em 2 horas
+- Rotação de refresh tokens habilitada
+- Confirmação de email obrigatória
+- Senha mínima de 10 caracteres
+- Login social: Google, Facebook e Apple
+
+### Storage
+
+- Limite de arquivo: 100MB
+- Limite diário: 1GB
+- Tipos MIME permitidos:
+  - Imagens (JPEG, PNG, GIF)
+  - PDF
+  - Documentos Office
+
+### Database
+
+- Pool de conexões habilitado
+- Máximo de 200 conexões simultâneas
+- Pool size padrão: 30
+
+### Edge Functions
+
+- Timeout: 60 segundos
+- JWT verificação obrigatória
+- CORS configurado
+- Tipos e utilitários compartilhados
+
+## Ambientes
+
+### Desenvolvimento
+
+```bash
+supabase start
+supabase functions serve
+```
+
+### Produção
+
+URLs:
+- API: https://api.agendopro.com.br
+- App: https://app.agendopro.com.br
+- Admin: https://admin.agendopro.com.br
+
+## Migrações
+
+Para aplicar migrações:
+
+```bash
+./apply_migrations.sh
+```
+
+## Segurança
+
+- Todas as funções verificam JWT
+- Cookies seguros e HttpOnly
+- CORS configurado adequadamente
+- SSL/TLS obrigatório
+
+## Monitoramento
+
+- Analytics habilitado
+- Vector habilitado para métricas
+- Logs disponíveis no dashboard
+
+## Manutenção
+
+Para atualizar as configurações:
+
+1. Edite os arquivos relevantes
+2. Execute `supabase db reset` em desenvolvimento
+3. Teste as alterações
+4. Crie uma nova migração se necessário
+5. Aplique em produção
 
 ## Troubleshooting
-If you encounter any issues:
-1. Check the Supabase logs for detailed error messages
-2. Ensure you have the necessary permissions
-3. Verify the database connection is stable
-4. Make sure there are no conflicting table names or policies
 
-For additional support, please contact the development team. 
+Problemas comuns e soluções:
+
+1. Erro de conexão:
+   ```bash
+   supabase stop && supabase start
+   ```
+
+2. Limpar cache:
+   ```bash
+   supabase db reset
+   ```
+
+3. Logs:
+   ```bash
+   supabase logs
+   ```
+
+## Contato
+
+Para questões relacionadas à infraestrutura:
+- Email: suporte@agendopro.com.br 
