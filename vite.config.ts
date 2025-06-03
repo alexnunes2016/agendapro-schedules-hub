@@ -45,9 +45,5 @@ export default defineConfig(({ mode }) => ({
   },
   define: {
     global: 'globalThis',
-    },
-  // Completely disable TypeScript checking to avoid project reference issues
-  experimental: {
-    skipSSR: true
   }
 }));
