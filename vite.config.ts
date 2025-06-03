@@ -41,29 +41,7 @@ export default defineConfig(({ mode }) => ({
       'this-is-undefined-in-esm': 'silent'
     },
     loader: 'tsx',
-    jsx: 'automatic',
-    tsconfigRaw: {
-      compilerOptions: {
-        target: "esnext",
-        lib: ["dom", "dom.iterable", "es6"],
-        allowJs: true,
-        skipLibCheck: true,
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true,
-        strict: true,
-        forceConsistentCasingInFileNames: true,
-        module: "esnext",
-        moduleResolution: "bundler",
-        resolveJsonModule: true,
-        isolatedModules: true,
-        noEmit: false,
-        jsx: "react-jsx",
-        baseUrl: ".",
-        paths: {
-          "@/*": ["./src/*"]
-        }
-      }
-    }
+    jsx: 'automatic'
   },
   define: {
     global: 'globalThis',
