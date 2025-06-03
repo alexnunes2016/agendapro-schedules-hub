@@ -11,16 +11,13 @@ import { default as JsPDF } from "jspdf";
 import "jspdf-autotable";
 import * as XLSX from 'xlsx';
 
-interface SystemStatsResponse {
+interface SystemStats {
   total_users: number;
   active_users: number;
   inactive_users: number;
   new_users_this_month: number;
   total_revenue_estimate: number;
   plan_distribution: Record<string, number>;
-}
-
-interface SystemStats extends SystemStatsResponse {
   total_appointments: number;
   appointments_this_month: number;
 }
@@ -40,7 +37,7 @@ const AdminReportsTab = () => {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [stats, setStats] = useState<SystemStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -50,10 +47,10 @@ const AdminReportsTab = () => {
   const fetchSystemStats = async () => {
     try {
       setLoading(true);
-
+      
       // Preparar datas para o filtro
-      let filterStartDate: string | null = startDate;
-      let filterEndDate: string | null = endDate;
+      let filterStartDate = startDate;
+      let filterEndDate = endDate;
 
       if (dateRange !== "custom") {
         const now = new Date();
@@ -61,69 +58,54 @@ const AdminReportsTab = () => {
         
         switch (dateRange) {
           case "last_7_days":
-            filterStartDate = new Date(today.setDate(today.getDate() - 7)).toISOString().split('T')[0];
+            filterStartDate = new Date(today.setDate(today.getDate() - 7)).toISOString();
             break;
           case "last_30_days":
-            filterStartDate = new Date(today.setDate(today.getDate() - 30)).toISOString().split('T')[0];
+            filterStartDate = new Date(today.setDate(today.getDate() - 30)).toISOString();
             break;
           case "last_3_months":
-            filterStartDate = new Date(today.setMonth(today.getMonth() - 3)).toISOString().split('T')[0];
+            filterStartDate = new Date(today.setMonth(today.getMonth() - 3)).toISOString();
             break;
           case "last_year":
-            filterStartDate = new Date(today.setFullYear(today.getFullYear() - 1)).toISOString().split('T')[0];
+            filterStartDate = new Date(today.setFullYear(today.getFullYear() - 1)).toISOString();
             break;
           default:
-            filterStartDate = null;
-            filterEndDate = null;
+            filterStartDate = "";
+            filterEndDate = "";
         }
-        filterEndDate = new Date().toISOString().split('T')[0];
+        filterEndDate = new Date().toISOString();
       }
 
-      const { data: statsData, error } = await supabase.rpc('get_system_statistics', {
+      const { data, error } = await supabase.rpc('get_system_statistics', {
         start_date: filterStartDate,
         end_date: filterEndDate
       });
 
       if (error) {
-        console.error('Error from Supabase:', error);
-        throw new Error(error.message);
-      }
-
-      if (!statsData) {
-        throw new Error('No data received from the server');
-      }
-
-      // Check if the response contains an error message
-      if (statsData.error) {
-        toast({
-          title: "Erro de Permissão",
-          description: statsData.message || "Você não tem permissão para acessar este relatório",
-          variant: "destructive",
-        });
+        if (error.message.includes('Permission denied')) {
+          toast({
+            title: "Erro de Permissão",
+            description: "Você precisa ser um super admin para acessar estas estatísticas.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Erro ao carregar estatísticas",
+            description: error.message,
+            variant: "destructive"
+          });
+        }
         setStats(null);
         return;
       }
 
-      const rawStats = statsData as Record<string, any>;
-      
-      const newStats: SystemStats = {
-        total_users: Number(rawStats.total_users || 0),
-        active_users: Number(rawStats.active_users || 0),
-        inactive_users: Number(rawStats.inactive_users || 0),
-        new_users_this_month: Number(rawStats.new_users_this_month || 0),
-        total_revenue_estimate: Number(rawStats.total_revenue_estimate || 0),
-        plan_distribution: rawStats.plan_distribution || {},
-        total_appointments: Number(rawStats.total_appointments || 0),
-        appointments_this_month: Number(rawStats.appointments_this_month || 0)
-      };
-
-      setStats(newStats);
-    } catch (error: any) {
-      console.error('Error fetching system stats:', error);
+      setStats(data as SystemStats);
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
       toast({
         title: "Erro ao carregar estatísticas",
-        description: error.message || "Não foi possível carregar as estatísticas do sistema",
-        variant: "destructive",
+        description: "Ocorreu um erro ao carregar as estatísticas do sistema.",
+        variant: "destructive"
       });
       setStats(null);
     } finally {
