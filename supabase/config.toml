@@ -2,13 +2,17 @@ project_id = "lbyyogrfzwxhlbcdfhqz"
 
 [api]
 enabled = true
-port = 54321
-schemas = ["public", "graphql_public"]
+port = 8000
+schemas = ["public", "storage"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [db]
-port = 54322
+port = 5432
+host = "db.lbyyogrfzwxhlbcdfhqz.supabase.co"
+user = "postgres"
+password = "eIzewIQm1crwhOEG"
+name = "postgres"
 max_connections = 100
 
 [db.pooler]
@@ -26,7 +30,7 @@ max_events = 100
 
 [studio]
 enabled = true
-port = 54323
+port = 3000
 api_url = "https://api.agendopro.com.br"
 
 [inbucket]
@@ -52,15 +56,10 @@ allowed_mime_types = [
 
 [auth]
 enabled = true
-port = 54324
-site_url = "https://agendopro.com.br"
-additional_redirect_urls = [
-  "https://agendopro.com.br",
-  "https://app.agendopro.com.br",
-  "https://admin.agendopro.com.br",
-  "http://localhost:3000"
-]
-jwt_expiry = 7200
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+enable_signup = true
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
 enable_manual_linking = false
@@ -99,3 +98,9 @@ environment = [
 enabled = true
 port = 54328
 vector_enabled = true
+
+[services]
+[services.postgres]
+port = 5432
+[services.studio]
+port = 3000
