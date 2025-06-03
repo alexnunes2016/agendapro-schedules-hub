@@ -72,13 +72,13 @@ BEGIN
     -- Get appointment statistics
     SELECT 
         COUNT(*),
-        SUM(CASE WHEN date_trunc('month', start_time) = current_month THEN 1 ELSE 0 END)
+        SUM(CASE WHEN date_trunc('month', created_at) = current_month THEN 1 ELSE 0 END)
     INTO
         total_appointments,
         monthly_appointments
     FROM appointments
-    WHERE (start_date IS NULL OR start_time >= start_date)
-        AND (end_date IS NULL OR start_time <= end_date);
+    WHERE (start_date IS NULL OR created_at >= start_date)
+        AND (end_date IS NULL OR created_at <= end_date);
 
     -- Build result JSON
     result := jsonb_build_object(
