@@ -53,17 +53,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     let mounted = true;
 
-    // Get initial session
-    const getInitialSession = async () => {
+    const initializeAuth = async () => {
       try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        console.log('Initializing auth...');
+        
+        // Get initial session
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          if (mounted) {
+            setLoading(false);
+            setInitialized(true);
+          }
+          return;
+        }
         
         if (!mounted) return;
+        
+        console.log('Initial session:', initialSession?.user?.id || 'No session');
         
         setSession(initialSession);
         setUser(initialSession?.user ?? null);
@@ -73,10 +87,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         
         setLoading(false);
+        setInitialized(true);
       } catch (error) {
-        console.error('Error getting initial session:', error);
+        console.error('Error initializing auth:', error);
         if (mounted) {
           setLoading(false);
+          setInitialized(true);
         }
       }
     };
@@ -86,31 +102,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       async (event, session) => {
         if (!mounted) return;
         
-        console.log('Auth state changed:', event, session?.user?.id);
+        console.log('Auth state changed:', event, session?.user?.id || 'No user');
         
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user && event !== 'SIGNED_OUT') {
-          await fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
+        // Only update state if already initialized to prevent loops
+        if (initialized) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user && event !== 'SIGNED_OUT') {
+            await fetchProfile(session.user.id);
+          } else {
+            setProfile(null);
+          }
         }
-        
-        setLoading(false);
       }
     );
 
-    getInitialSession();
+    initializeAuth();
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [initialized]);
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -123,7 +142,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       
       if (data) {
+        console.log('Profile loaded:', data.name);
         setProfile(data);
+      } else {
+        console.log('No profile found for user');
+        setProfile(null);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -132,28 +155,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      setLoading(true);
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error('Sign in error:', error);
         toast({
           title: "Erro no login",
           description: error.message,
           variant: "destructive",
         });
+      } else {
+        console.log('Sign in successful');
       }
 
       return { error };
     } catch (error) {
       console.error('Sign in error:', error);
       return { error };
+    } finally {
+      setLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string, userData?: any) => {
     try {
+      setLoading(true);
+      
       const redirectUrl = `${window.location.origin}/`;
       
       const { error } = await supabase.auth.signUp({
@@ -166,6 +198,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (error) {
+        console.error('Sign up error:', error);
         toast({
           title: "Erro no cadastro",
           description: error.message,
@@ -182,17 +215,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Sign up error:', error);
       return { error };
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
+      setLoading(true);
       await supabase.auth.signOut();
       setUser(null);
       setProfile(null);
       setSession(null);
     } catch (error) {
       console.error('Sign out error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 

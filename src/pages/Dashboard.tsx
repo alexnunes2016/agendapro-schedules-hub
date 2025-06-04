@@ -15,30 +15,36 @@ const Dashboard = () => {
   const { user, profile, signOut, loading: authLoading } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Redirect logic with better error handling
+  // Handle authentication redirect
   useEffect(() => {
+    console.log('Dashboard - authLoading:', authLoading, 'user:', user?.id);
+    
     if (!authLoading) {
       if (!user) {
         console.log('No user found, redirecting to login');
         navigate("/login", { replace: true });
+        return;
       }
+      setPageLoading(false);
     }
   }, [user, authLoading, navigate]);
 
-  // Fetch appointments only when user is available
+  // Fetch appointments only when user is available and authenticated
   useEffect(() => {
-    if (user && !authLoading) {
+    if (user && !authLoading && profile) {
       fetchAppointments();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, profile]);
 
   const fetchAppointments = async () => {
     if (!user) return;
 
     try {
+      console.log('Fetching appointments for user:', user.id);
       const today = new Date().toISOString().split('T')[0];
 
       const { data: recentAppointments, error } = await supabase
@@ -51,7 +57,10 @@ const Dashboard = () => {
         .limit(3);
 
       if (!error && recentAppointments) {
+        console.log('Appointments fetched:', recentAppointments.length);
         setAppointments(recentAppointments);
+      } else if (error) {
+        console.error('Error fetching appointments:', error);
       }
     } catch (error) {
       console.error('Error fetching appointments:', error);
@@ -60,6 +69,7 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     try {
+      console.log('Logging out...');
       await signOut();
       navigate("/", { replace: true });
       toast({
@@ -81,8 +91,8 @@ const Dashboard = () => {
     document.documentElement.classList.toggle('dark');
   };
 
-  // Show loading while auth is loading
-  if (authLoading) {
+  // Show loading while auth is loading or page is loading
+  if (authLoading || pageLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
         <LoadingSpinner size="lg" text="Carregando sistema..." />

@@ -33,7 +33,7 @@ const queryClient = new QueryClient({
 const AppRoutes = () => {
   const { user, loading } = useAuth();
 
-  console.log('AppRoutes - user:', user?.id, 'loading:', loading);
+  console.log('AppRoutes - user:', user?.id || 'No user', 'loading:', loading);
 
   if (loading) {
     console.log('AppRoutes - showing loading spinner');
@@ -49,8 +49,8 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
+      <Route path="/register" element={user ? <Navigate to="/dashboard" replace /> : <Register />} />
       <Route path="/booking/:userId" element={<BookingPublic />} />
 
       {user ? (
