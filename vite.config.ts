@@ -39,9 +39,7 @@ export default defineConfig(({ mode }) => ({
     target: 'esnext',
     logOverride: { 
       'this-is-undefined-in-esm': 'silent'
-    },
-    loader: 'tsx',
-    jsx: 'automatic'
+    }
   },
   define: {
     global: 'globalThis',
