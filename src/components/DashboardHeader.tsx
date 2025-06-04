@@ -1,10 +1,9 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Calendar, Settings, LogOut, Copy, Star, Shield, Menu } from "lucide-react";
+import { Calendar, Settings, LogOut, Copy, Star, Menu } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -17,7 +16,6 @@ interface DashboardHeaderProps {
 
 const DashboardHeader = ({ profile, darkMode, toggleDarkMode, handleLogout }: DashboardHeaderProps) => {
   const { user } = useAuth();
-  const { isAdmin } = useAdminCheck();
   const { toast } = useToast();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -47,15 +45,6 @@ const DashboardHeader = ({ profile, darkMode, toggleDarkMode, handleLogout }: Da
           <Button variant="outline" className="border-yellow-500 text-yellow-600 hover:bg-yellow-50 w-full justify-start">
             <Star className="h-4 w-4 mr-2" />
             Upgrade
-          </Button>
-        </Link>
-      )}
-
-      {isAdmin && (
-        <Link to="/admin" className="w-full">
-          <Button variant="outline" className="border-red-500 text-red-600 hover:bg-red-50 w-full justify-start">
-            <Shield className="h-4 w-4 mr-2" />
-            Admin
           </Button>
         </Link>
       )}
@@ -107,15 +96,6 @@ const DashboardHeader = ({ profile, darkMode, toggleDarkMode, handleLogout }: Da
                 <Button variant="outline" className="border-yellow-500 text-yellow-600 hover:bg-yellow-50">
                   <Star className="h-4 w-4 mr-2" />
                   Upgrade
-                </Button>
-              </Link>
-            )}
-
-            {isAdmin && (
-              <Link to="/admin">
-                <Button variant="outline" className="border-red-500 text-red-600 hover:bg-red-50">
-                  <Shield className="h-4 w-4 mr-2" />
-                  Admin
                 </Button>
               </Link>
             )}
