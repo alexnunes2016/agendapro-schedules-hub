@@ -54,8 +54,29 @@ export default defineConfig(({ mode }) => ({
         allowSyntheticDefaultImports: true,
         forceConsistentCasingInFileNames: true,
         isolatedModules: true,
-        useDefineForClassFields: true
-      }
+        useDefineForClassFields: true,
+        baseUrl: '.',
+        paths: {
+          "@/*": ["./src/*"]
+        },
+        types: ['vite/client', 'node'],
+        lib: ['DOM', 'DOM.Iterable', 'ES6'],
+        declaration: false,
+        composite: false,
+        incremental: false
+      },
+      exclude: [
+        'node_modules',
+        'dist',
+        '**/*.test.ts',
+        '**/*.test.tsx'
+      ],
+      include: [
+        'src/**/*',
+        'src/**/*.ts',
+        'src/**/*.tsx',
+        'src/**/*.d.ts'
+      ]
     }
   },
   define: {
