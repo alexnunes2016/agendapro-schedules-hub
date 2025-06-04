@@ -18,8 +18,6 @@ import OrganizationUsers from "./pages/OrganizationUsers";
 import AppearanceSettings from "./pages/AppearanceSettings";
 import BookingPublic from "./pages/BookingPublic";
 import Upgrade from "./pages/Upgrade";
-import { AdminDashboard } from "./components/admin/AdminDashboard";
-import { UserManagement } from "./components/admin/UserManagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,10 +57,6 @@ const AppRoutes = () => {
           <Route path="/appointments" element={<Appointments />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/upgrade" element={<Upgrade />} />
-          
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/users" element={<UserManagement />} />
           
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </>

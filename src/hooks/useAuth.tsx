@@ -1,197 +1,216 @@
-import { useState, useEffect, createContext, useContext, useCallback } from 'react';
+
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { User } from '@supabase/supabase-js';
-import { useErrorHandler } from '@/utils/errorHandler';
-import { AuthContextType, UserProfile } from '@/types/auth';
-import { PermissionManager } from '@/utils/permissions';
+import { useToast } from '@/hooks/use-toast';
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+interface Profile {
+  id: string;
+  name: string;
+  email: string;
+  clinic_name?: string;
+  service_type?: string;
+  plan?: string;
+  role?: string;
+  is_active?: boolean;
+  email_confirmed?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+interface AuthContextType {
+  user: User | null;
+  profile: Profile | null;
+  session: Session | null;
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, userData?: any) => Promise<{ error: any }>;
+  signOut: () => Promise<void>;
+  updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
+}
+
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  profile: null,
+  session: null,
+  loading: true,
+  signIn: async () => ({ error: null }),
+  signUp: async () => ({ error: null }),
+  signOut: async () => {},
+  updateProfile: async () => ({ error: null }),
+});
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const { handleError } = useErrorHandler();
+  const { toast } = useToast();
 
-  const fetchProfile = useCallback(async (userId: string) => {
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        } else {
+          setProfile(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchProfile = async (userId: string) => {
     try {
-      console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
-      
-      if (!error && data) {
-        console.log('Profile loaded successfully:', data);
-        setProfile(data as UserProfile);
-      } else if (error) {
-        console.error('Error fetching profile:', error);
-        handleError(error, 'fetchProfile');
-      }
+
+      if (error) throw error;
+      setProfile(data);
     } catch (error) {
       console.error('Error fetching profile:', error);
-      handleError(error instanceof Error ? error : new Error('Unknown error'), 'fetchProfile');
     }
-  }, [handleError]);
+  };
 
-  const refreshProfile = useCallback(async () => {
-    if (user?.id) {
-      await fetchProfile(user.id);
-    }
-  }, [user?.id, fetchProfile]);
-
-  useEffect(() => {
-    let mounted = true;
-    console.log('Setting up auth state listener');
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-        console.log('Auth state changed:', event, session?.user?.id);
-
-        try {
-          setUser(session?.user ?? null);
-          
-          if (session?.user && event !== 'SIGNED_OUT') {
-            console.log('User signed in, fetching profile');
-            setTimeout(() => {
-              if (mounted) {
-                fetchProfile(session.user.id);
-              }
-            }, 100);
-          } else {
-            console.log('User signed out, clearing profile');
-            setProfile(null);
-          }
-          
-          if (event === 'INITIAL_SESSION') {
-            setLoading(false);
-          }
-        } catch (error) {
-          console.error('Error in auth state change:', error);
-          handleError(error instanceof Error ? error : new Error('Unknown error'), 'authStateChange');
-          setLoading(false);
-        }
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (!mounted) return;
-      
-      if (error) {
-        console.error('Error getting session:', error);
-        handleError(error, 'getSession');
-        setLoading(false);
-        return;
-      }
-      
-      console.log('Initial session:', session?.user?.id);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-      setLoading(false);
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [fetchProfile, handleError]);
-
-  const signIn = useCallback(async (email: string, password: string) => {
-    const canAttempt = await PermissionManager.checkRateLimit(email);
-    if (!canAttempt) {
-      return { error: new Error('Muitas tentativas de login. Tente novamente em alguns minutos.') };
-    }
-
+  const signIn = async (email: string, password: string) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      
-      await PermissionManager.trackAuthAttempt(email, 'login', !error);
-      
-      return { error: error ? new Error(error.message) : null };
+
+      if (error) {
+        toast({
+          title: "Erro no login",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+
+      return { error };
     } catch (error) {
-      await PermissionManager.trackAuthAttempt(email, 'login', false);
-      handleError(error instanceof Error ? error : new Error('Unknown error'), 'signIn');
-      return { error: error instanceof Error ? error : new Error('Unknown error') };
+      console.error('Sign in error:', error);
+      return { error };
     }
-  }, [handleError]);
+  };
 
-  const signUp = useCallback(async (email: string, password: string, userData: Partial<UserProfile>) => {
-    const canAttempt = await PermissionManager.checkRateLimit(email);
-    if (!canAttempt) {
-      return { error: new Error('Muitas tentativas de cadastro. Tente novamente em alguns minutos.') };
-    }
-
+  const signUp = async (email: string, password: string, userData?: any) => {
     try {
+      const redirectUrl = `${window.location.origin}/`;
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: userData,
-          emailRedirectTo: `${window.location.origin}/dashboard`
+          emailRedirectTo: redirectUrl,
+          data: userData
         }
       });
-      
-      await PermissionManager.trackAuthAttempt(email, 'signup', !error);
-      
-      return { error: error ? new Error(error.message) : null };
-    } catch (error) {
-      await PermissionManager.trackAuthAttempt(email, 'signup', false);
-      handleError(error instanceof Error ? error : new Error('Unknown error'), 'signUp');
-      return { error: error instanceof Error ? error : new Error('Unknown error') };
-    }
-  }, [handleError]);
 
-  const signOut = useCallback(async () => {
+      if (error) {
+        toast({
+          title: "Erro no cadastro",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Cadastro realizado",
+          description: "Verifique seu email para confirmar a conta.",
+        });
+      }
+
+      return { error };
+    } catch (error) {
+      console.error('Sign up error:', error);
+      return { error };
+    }
+  };
+
+  const signOut = async () => {
     try {
       await supabase.auth.signOut();
+      setUser(null);
       setProfile(null);
+      setSession(null);
     } catch (error) {
-      handleError(error instanceof Error ? error : new Error('Unknown error'), 'signOut');
+      console.error('Sign out error:', error);
     }
-  }, [handleError]);
+  };
 
-  const isAuthenticated = Boolean(user && profile);
-  const isSuperAdmin = PermissionManager.isSuperAdminSync(profile);
-  const isAdmin = PermissionManager.isAdminSync(profile);
+  const updateProfile = async (updates: Partial<Profile>) => {
+    try {
+      if (!user) throw new Error('No user logged in');
 
-  console.log('Auth Context State:', { 
-    user: user?.id, 
-    profile: profile?.id, 
-    isAuthenticated, 
-    isSuperAdmin, 
-    isAdmin,
-    loading 
-  });
+      const { error } = await supabase
+        .from('profiles')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      // Refresh profile data
+      await fetchProfile(user.id);
+      
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas informações foram salvas com sucesso.",
+      });
+
+      return { error: null };
+    } catch (error) {
+      console.error('Update profile error:', error);
+      toast({
+        title: "Erro ao atualizar perfil",
+        description: "Não foi possível salvar as alterações.",
+        variant: "destructive",
+      });
+      return { error };
+    }
+  };
+
+  const value = {
+    user,
+    profile,
+    session,
+    loading,
+    signIn,
+    signUp,
+    signOut,
+    updateProfile,
+  };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      profile,
-      loading,
-      signIn,
-      signUp,
-      signOut,
-      refreshProfile,
-      isAuthenticated,
-      isSuperAdmin,
-      isAdmin,
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };
