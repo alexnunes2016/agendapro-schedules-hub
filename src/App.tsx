@@ -15,9 +15,10 @@ import Services from "./pages/Services";
 import Appointments from "./pages/Appointments";
 import Reports from "./pages/Reports";
 import OrganizationUsers from "./pages/OrganizationUsers";
-import AppearanceSettings from "./pages/AppearanceSettings";
 import BookingPublic from "./pages/BookingPublic";
 import Upgrade from "./pages/Upgrade";
+import MedicalRecords from "./pages/MedicalRecords";
+import NotificationSettings from "./pages/NotificationSettings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,11 +53,12 @@ const AppRoutes = () => {
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/calendar" element={<CalendarSettings />} />
           <Route path="/settings/organization-users" element={<OrganizationUsers />} />
-          <Route path="/settings/appearance" element={<AppearanceSettings />} />
+          <Route path="/settings/notifications" element={<NotificationSettings />} />
           <Route path="/services" element={<Services />} />
           <Route path="/appointments" element={<Appointments />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/upgrade" element={<Upgrade />} />
+          <Route path="/medical-records" element={<MedicalRecords />} />
           
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </>
