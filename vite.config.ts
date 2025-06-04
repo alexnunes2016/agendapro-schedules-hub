@@ -39,6 +39,13 @@ export default defineConfig(({ mode }) => ({
     target: 'esnext',
     logOverride: { 
       'this-is-undefined-in-esm': 'silent'
+    },
+    tsconfigRaw: {
+      compilerOptions: {
+        skipLibCheck: true,
+        allowSyntheticDefaultImports: true,
+        esModuleInterop: true
+      }
     }
   },
   define: {

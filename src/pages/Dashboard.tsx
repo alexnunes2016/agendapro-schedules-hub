@@ -9,26 +9,28 @@ import DashboardWelcome from "@/components/DashboardWelcome";
 import DashboardStatsCards from "@/components/DashboardStatsCards";
 import DashboardQuickActions from "@/components/DashboardQuickActions";
 import DashboardRecentAppointments from "@/components/DashboardRecentAppointments";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const Dashboard = () => {
   const { user, profile, signOut, loading: authLoading } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
-  const [hasShownPlanUpdate, setHasShownPlanUpdate] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Only redirect to login if auth is fully loaded and user is definitely not authenticated
+  // Redirect logic with better error handling
   useEffect(() => {
-    if (!authLoading && !user) {
-      console.log('Redirecting to login - user not authenticated');
-      navigate("/login");
+    if (!authLoading) {
+      if (!user) {
+        console.log('No user found, redirecting to login');
+        navigate("/login", { replace: true });
+      }
     }
   }, [user, authLoading, navigate]);
 
+  // Fetch appointments only when user is available
   useEffect(() => {
-    // Only fetch appointments when we have a user and auth is loaded
-    if (!authLoading && user) {
+    if (user && !authLoading) {
       fetchAppointments();
     }
   }, [user, authLoading]);
@@ -39,8 +41,7 @@ const Dashboard = () => {
     try {
       const today = new Date().toISOString().split('T')[0];
 
-      // Get recent appointments
-      const { data: recentAppointments, error: recentError } = await (supabase as any)
+      const { data: recentAppointments, error } = await supabase
         .from('appointments')
         .select('*, services(name)')
         .eq('user_id', user.id)
@@ -49,7 +50,7 @@ const Dashboard = () => {
         .order('appointment_time', { ascending: true })
         .limit(3);
 
-      if (!recentError && recentAppointments) {
+      if (!error && recentAppointments) {
         setAppointments(recentAppointments);
       }
     } catch (error) {
@@ -58,12 +59,21 @@ const Dashboard = () => {
   };
 
   const handleLogout = async () => {
-    await signOut();
-    navigate("/");
-    toast({
-      title: "Logout realizado",
-      description: "Você foi desconectado com sucesso",
-    });
+    try {
+      await signOut();
+      navigate("/", { replace: true });
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso",
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Erro no logout",
+        description: "Erro ao desconectar. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleDarkMode = () => {
@@ -75,17 +85,23 @@ const Dashboard = () => {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <div className="text-base sm:text-lg">Carregando...</div>
-        </div>
+        <LoadingSpinner size="lg" text="Carregando sistema..." />
       </div>
     );
   }
 
   // Don't render anything if no user (will redirect)
-  if (!user || !profile) {
+  if (!user) {
     return null;
+  }
+
+  // Show loading if profile hasn't loaded yet
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+        <LoadingSpinner size="lg" text="Carregando perfil..." />
+      </div>
+    );
   }
 
   return (

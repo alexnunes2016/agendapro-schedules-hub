@@ -19,6 +19,7 @@ import BookingPublic from "./pages/BookingPublic";
 import Upgrade from "./pages/Upgrade";
 import MedicalRecords from "./pages/MedicalRecords";
 import NotificationSettings from "./pages/NotificationSettings";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,13 +33,18 @@ const queryClient = new QueryClient({
 const AppRoutes = () => {
   const { user, loading } = useAuth();
 
+  console.log('AppRoutes - user:', user?.id, 'loading:', loading);
+
   if (loading) {
+    console.log('AppRoutes - showing loading spinner');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <LoadingSpinner size="lg" text="Inicializando sistema..." />
       </div>
     );
   }
+
+  console.log('AppRoutes - rendering routes, user authenticated:', !!user);
 
   return (
     <Routes>
@@ -70,6 +76,8 @@ const AppRoutes = () => {
 };
 
 const App = () => {
+  console.log('App component rendering');
+  
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
