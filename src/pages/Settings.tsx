@@ -2,7 +2,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Settings as SettingsIcon, Users, FileText, Calendar, Bell } from "lucide-react";
+import { ArrowLeft, Settings as SettingsIcon, FileText, Calendar, Bell } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const Settings = () => {
@@ -42,26 +42,6 @@ const Settings = () => {
 
       <div className="p-6">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          
-          {/* Usuários da Organização */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-blue-600" />
-                <span>Usuários da Organização</span>
-              </CardTitle>
-              <CardDescription>
-                Gerencie usuários, convites e permissões da sua organização
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/settings/organization-users">
-                <Button className="w-full">
-                  Gerenciar Usuários
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
 
           {/* Prontuários Médicos */}
           {(profile?.service_type === 'medicina' || profile?.service_type === 'odontologia') && (

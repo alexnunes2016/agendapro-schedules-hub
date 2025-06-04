@@ -14,7 +14,6 @@ import CalendarSettings from "./pages/CalendarSettings";
 import Services from "./pages/Services";
 import Appointments from "./pages/Appointments";
 import Reports from "./pages/Reports";
-import OrganizationUsers from "./pages/OrganizationUsers";
 import BookingPublic from "./pages/BookingPublic";
 import Upgrade from "./pages/Upgrade";
 import MedicalRecords from "./pages/MedicalRecords";
@@ -58,7 +57,6 @@ const AppRoutes = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/calendar" element={<CalendarSettings />} />
-          <Route path="/settings/organization-users" element={<OrganizationUsers />} />
           <Route path="/settings/notifications" element={<NotificationSettings />} />
           <Route path="/services" element={<Services />} />
           <Route path="/appointments" element={<Appointments />} />
