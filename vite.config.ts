@@ -42,9 +42,7 @@ export default defineConfig(({ mode }) => ({
     logOverride: { 
       'this-is-undefined-in-esm': 'silent'
     },
-    // Use nossa configuração customizada diretamente
-    tsconfig: path.resolve(__dirname, './tsconfig.custom.json'),
-    tsconfigRaw: false
+    tsconfig: path.resolve(__dirname, './tsconfig.custom.json')
   },
   define: {
     global: 'globalThis',
