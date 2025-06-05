@@ -44,7 +44,10 @@ export default defineConfig(({ mode }) => ({
     target: 'esnext',
     logOverride: { 
       'this-is-undefined-in-esm': 'silent'
-    }
+    },
+    loader: 'jsx',
+    include: /src\/.*\.[jt]sx?$/,
+    exclude: []
   },
   define: {
     global: 'globalThis',
