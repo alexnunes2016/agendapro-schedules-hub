@@ -13,7 +13,9 @@ export default defineConfig(({ mode }) => ({
     historyApiFallback: true
   },
   plugins: [
-    react(),
+    react({
+      tsDecorators: true
+    }),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
@@ -39,6 +41,30 @@ export default defineConfig(({ mode }) => ({
     target: 'esnext',
     logOverride: { 
       'this-is-undefined-in-esm': 'silent'
+    },
+    tsconfigRaw: {
+      compilerOptions: {
+        target: "ES2020",
+        useDefineForClassFields: true,
+        lib: ["ES2020", "DOM", "DOM.Iterable"],
+        module: "ESNext",
+        skipLibCheck: true,
+        moduleResolution: "bundler",
+        allowImportingTsExtensions: true,
+        isolatedModules: true,
+        moduleDetection: "force",
+        noEmit: true,
+        jsx: "react-jsx",
+        strict: true,
+        baseUrl: ".",
+        paths: {
+          "@/*": ["./src/*"]
+        },
+        allowSyntheticDefaultImports: true,
+        esModuleInterop: true,
+        forceConsistentCasingInFileNames: true,
+        resolveJsonModule: true
+      }
     }
   },
   define: {
