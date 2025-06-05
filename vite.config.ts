@@ -42,30 +42,9 @@ export default defineConfig(({ mode }) => ({
     logOverride: { 
       'this-is-undefined-in-esm': 'silent'
     },
-    tsconfigRaw: {
-      compilerOptions: {
-        target: "ES2020",
-        useDefineForClassFields: true,
-        lib: ["ES2020", "DOM", "DOM.Iterable"],
-        module: "ESNext",
-        skipLibCheck: true,
-        moduleResolution: "bundler",
-        allowImportingTsExtensions: true,
-        isolatedModules: true,
-        moduleDetection: "force",
-        noEmit: true,
-        jsx: "react-jsx",
-        strict: true,
-        baseUrl: ".",
-        paths: {
-          "@/*": ["./src/*"]
-        },
-        allowSyntheticDefaultImports: true,
-        esModuleInterop: true,
-        forceConsistentCasingInFileNames: true,
-        resolveJsonModule: true
-      }
-    }
+    // Use nossa configuração customizada diretamente
+    tsconfig: path.resolve(__dirname, './tsconfig.custom.json'),
+    tsconfigRaw: false
   },
   define: {
     global: 'globalThis',
