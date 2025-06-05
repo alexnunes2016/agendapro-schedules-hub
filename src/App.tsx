@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useAuth, AuthProvider } from "@/hooks/useAuth";
+import { TenantAuthProvider, useTenantAuth } from "@/hooks/useTenantAuth";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -18,6 +18,8 @@ import BookingPublic from "./pages/BookingPublic";
 import Upgrade from "./pages/Upgrade";
 import MedicalRecords from "./pages/MedicalRecords";
 import NotificationSettings from "./pages/NotificationSettings";
+import SuperAdminDashboard from "./components/admin/SuperAdminDashboard";
+import RoleBasedRoute from "./components/auth/RoleBasedRoute";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const queryClient = new QueryClient({
@@ -30,7 +32,7 @@ const queryClient = new QueryClient({
 });
 
 const AppRoutes = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, isSuperAdmin } = useTenantAuth();
 
   console.log('AppRoutes - user:', user?.id || 'No user', 'loading:', loading);
 
@@ -54,17 +56,51 @@ const AppRoutes = () => {
 
       {user ? (
         <>
+          {/* Super Admin Routes */}
+          <Route 
+            path="/super-admin" 
+            element={
+              <RoleBasedRoute allowedRoles={['super_admin']}>
+                <SuperAdminDashboard />
+              </RoleBasedRoute>
+            } 
+          />
+          
+          {/* Regular User Routes */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/calendar" element={<CalendarSettings />} />
           <Route path="/settings/notifications" element={<NotificationSettings />} />
           <Route path="/services" element={<Services />} />
           <Route path="/appointments" element={<Appointments />} />
-          <Route path="/reports" element={<Reports />} />
+          <Route 
+            path="/reports" 
+            element={
+              <RoleBasedRoute allowedRoles={['super_admin', 'tenant_admin']}>
+                <Reports />
+              </RoleBasedRoute>
+            } 
+          />
           <Route path="/upgrade" element={<Upgrade />} />
-          <Route path="/medical-records" element={<MedicalRecords />} />
+          <Route 
+            path="/medical-records" 
+            element={
+              <RoleBasedRoute requiredPermissions={['medical_records.view']}>
+                <MedicalRecords />
+              </RoleBasedRoute>
+            } 
+          />
           
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          {/* Redirect to appropriate dashboard based on role */}
+          <Route 
+            path="*" 
+            element={
+              <Navigate 
+                to={isSuperAdmin ? "/super-admin" : "/dashboard"} 
+                replace 
+              />
+            } 
+          />
         </>
       ) : (
         <Route path="*" element={<Navigate to="/login" replace />} />
@@ -78,7 +114,7 @@ const App = () => {
   
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
+      <TenantAuthProvider>
         <BrowserRouter>
           <TooltipProvider>
             <div className="min-h-screen">
@@ -88,7 +124,7 @@ const App = () => {
             </div>
           </TooltipProvider>
         </BrowserRouter>
-      </AuthProvider>
+      </TenantAuthProvider>
     </QueryClientProvider>
   );
 };
