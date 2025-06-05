@@ -10,7 +10,7 @@
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
-    "noEmit": false,
+    "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
     "noUnusedLocals": false,
@@ -25,10 +25,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "composite": true,
-    "outDir": "dist",
-    "declaration": true,
-    "declarationMap": true
+    "composite": true
   },
   "include": [
     "src/**/*.ts",
