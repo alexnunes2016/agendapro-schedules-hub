@@ -13,7 +13,10 @@ export default defineConfig(({ mode }) => ({
     historyApiFallback: true
   },
   plugins: [
-    react(),
+    react({
+      tsDecorators: false,
+      exclude: /\.ts$|\.tsx$/
+    }),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
@@ -22,7 +25,13 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    include: ['jspdf', 'jspdf-autotable']
+    include: ['jspdf', 'jspdf-autotable'],
+    esbuildOptions: {
+      loader: {
+        '.js': 'jsx',
+        '.jsx': 'jsx'
+      }
+    }
   },
   build: {
     target: 'esnext',
@@ -42,7 +51,8 @@ export default defineConfig(({ mode }) => ({
     },
     loader: 'jsx',
     include: /src\/.*\.[jt]sx?$/,
-    exclude: []
+    exclude: /\.ts$|\.tsx$/,
+    jsxInject: `import React from 'react'`
   },
   define: {
     global: 'globalThis',
