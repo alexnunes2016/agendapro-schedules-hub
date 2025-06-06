@@ -1,42 +1,23 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { Tenant, TenantUser, TenantRole } from '@/types/saas';
+import { TenantRole } from '@/types/saas';
 
 interface TenantAuthContextType {
   user: User | null;
-  session: Session | null;
-  tenant: Tenant | null;
-  tenantUser: TenantUser | null;
   userRole: TenantRole | null;
-  permissions: string[];
   loading: boolean;
-  signIn: (email: string, password: string, tenantSlug?: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, userData?: any) => Promise<{ error: any }>;
-  signOut: () => Promise<void>;
-  switchTenant: (tenantId: string) => Promise<{ error: any }>;
-  hasPermission: (permission: string) => boolean;
   isSuperAdmin: boolean;
-  refreshTenant: () => Promise<void>;
+  hasPermission: (permission: string) => boolean;
 }
 
 const TenantAuthContext = createContext<TenantAuthContextType>({
   user: null,
-  session: null,
-  tenant: null,
-  tenantUser: null,
   userRole: null,
-  permissions: [],
   loading: true,
-  signIn: async () => ({ error: null }),
-  signUp: async () => ({ error: null }),
-  signOut: async () => {},
-  switchTenant: async () => ({ error: null }),
-  hasPermission: () => false,
   isSuperAdmin: false,
-  refreshTenant: async () => {},
+  hasPermission: () => false,
 });
 
 export const useTenantAuth = () => {
@@ -49,269 +30,72 @@ export const useTenantAuth = () => {
 
 export const TenantAuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [tenantUser, setTenantUser] = useState<TenantUser | null>(null);
+  const [userRole, setUserRole] = useState<TenantRole | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
-  const { toast } = useToast();
-
-  // Derived values
-  const userRole = tenantUser?.role || null;
-  const permissions = tenantUser?.permissions || [];
-  const isSuperAdmin = userRole === 'super_admin';
 
   useEffect(() => {
-    let mounted = true;
-
-    const initializeAuth = async () => {
-      try {
-        console.log('Initializing tenant auth...');
-        
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          if (mounted) {
-            setLoading(false);
-            setInitialized(true);
-          }
-          return;
-        }
-        
-        if (!mounted) return;
-        
-        console.log('Initial session:', initialSession?.user?.id || 'No session');
-        
-        setSession(initialSession);
-        setUser(initialSession?.user ?? null);
-        
-        if (initialSession?.user) {
-          await fetchTenantData(initialSession.user.id);
-        }
-        
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserRole(session.user.id);
+      } else {
         setLoading(false);
-        setInitialized(true);
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-        if (mounted) {
-          setLoading(false);
-          setInitialized(true);
-        }
       }
-    };
+    });
 
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (!mounted) return;
-        
-        console.log('Auth state changed:', event, session?.user?.id || 'No user');
-        
-        if (initialized) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user && event !== 'SIGNED_OUT') {
-            await fetchTenantData(session.user.id);
-          } else {
-            setTenant(null);
-            setTenantUser(null);
-          }
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchUserRole(session.user.id);
+        } else {
+          setUserRole(null);
+          setLoading(false);
         }
       }
     );
 
-    initializeAuth();
+    return () => subscription.unsubscribe();
+  }, []);
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [initialized]);
-
-  const fetchTenantData = async (userId: string) => {
+  const fetchUserRole = async (userId: string) => {
     try {
-      console.log('Fetching tenant data for user:', userId);
-      
-      // First, get the user's current tenant
-      const { data: tenantUserData, error: tenantUserError } = await supabase
-        .from('tenant_users')
-        .select(`
-          *,
-          tenants (*)
-        `)
-        .eq('user_id', userId)
-        .eq('is_active', true)
-        .single();
-
-      if (tenantUserError && tenantUserError.code !== 'PGRST116') {
-        console.error('Error fetching tenant user:', tenantUserError);
-        return;
-      }
-      
-      if (tenantUserData) {
-        console.log('Tenant data loaded:', tenantUserData.tenants?.name);
-        setTenantUser(tenantUserData);
-        setTenant(tenantUserData.tenants as Tenant);
-      } else {
-        console.log('No tenant found for user');
-        setTenantUser(null);
-        setTenant(null);
-      }
-    } catch (error) {
-      console.error('Error fetching tenant data:', error);
-    }
-  };
-
-  const signIn = async (email: string, password: string, tenantSlug?: string) => {
-    try {
-      setLoading(true);
-      
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        console.error('Sign in error:', error);
-        toast({
-          title: "Erro no login",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        console.log('Sign in successful');
-        toast({
-          title: "Login realizado com sucesso!",
-          description: "Bem-vindo ao sistema",
-        });
-      }
-
-      return { error };
-    } catch (error) {
-      console.error('Sign in error:', error);
-      return { error };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signUp = async (email: string, password: string, userData?: any) => {
-    try {
-      setLoading(true);
-      
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: userData
-        }
-      });
-
-      if (error) {
-        console.error('Sign up error:', error);
-        toast({
-          title: "Erro no cadastro",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Cadastro realizado",
-          description: "Verifique seu email para confirmar a conta.",
-        });
-      }
-
-      return { error };
-    } catch (error) {
-      console.error('Sign up error:', error);
-      return { error };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      setLoading(true);
-      await supabase.auth.signOut();
-      setUser(null);
-      setTenant(null);
-      setTenantUser(null);
-      setSession(null);
-    } catch (error) {
-      console.error('Sign out error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const switchTenant = async (tenantId: string) => {
-    try {
-      if (!user) throw new Error('No user logged in');
-
       const { data, error } = await supabase
-        .from('tenant_users')
-        .select(`
-          *,
-          tenants (*)
-        `)
-        .eq('user_id', user.id)
-        .eq('tenant_id', tenantId)
-        .eq('is_active', true)
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
         .single();
 
-      if (error) throw error;
-
-      setTenantUser(data);
-      setTenant(data.tenants as Tenant);
-      
-      toast({
-        title: "Organização alterada",
-        description: `Agora você está trabalhando em ${data.tenants.name}`,
-      });
-
-      return { error: null };
+      if (error) {
+        console.error('Error fetching user role:', error);
+        setUserRole(null);
+      } else {
+        setUserRole(data?.role as TenantRole || null);
+      }
     } catch (error) {
-      console.error('Switch tenant error:', error);
-      toast({
-        title: "Erro ao alterar organização",
-        description: "Não foi possível alterar a organização.",
-        variant: "destructive",
-      });
-      return { error };
+      console.error('Error fetching user role:', error);
+      setUserRole(null);
+    } finally {
+      setLoading(false);
     }
   };
+
+  const isSuperAdmin = userRole === 'super_admin';
 
   const hasPermission = (permission: string): boolean => {
     if (isSuperAdmin) return true;
-    return permissions.includes(permission);
-  };
-
-  const refreshTenant = async () => {
-    if (user) {
-      await fetchTenantData(user.id);
-    }
+    // Add more permission logic here based on your needs
+    return false;
   };
 
   const value = {
     user,
-    session,
-    tenant,
-    tenantUser,
     userRole,
-    permissions,
     loading,
-    signIn,
-    signUp,
-    signOut,
-    switchTenant,
-    hasPermission,
     isSuperAdmin,
-    refreshTenant,
+    hasPermission,
   };
 
   return (

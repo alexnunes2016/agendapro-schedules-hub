@@ -11,9 +11,19 @@ import DashboardQuickActions from "@/components/DashboardQuickActions";
 import DashboardRecentAppointments from "@/components/DashboardRecentAppointments";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
+interface Appointment {
+  id: string;
+  client_name: string;
+  appointment_date: string;
+  appointment_time: string;
+  services?: {
+    name: string;
+  };
+}
+
 const Dashboard = () => {
   const { user, profile, signOut, loading: authLoading } = useAuth();
-  const [appointments, setAppointments] = useState([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [darkMode, setDarkMode] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const navigate = useNavigate();

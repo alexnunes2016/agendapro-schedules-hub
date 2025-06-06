@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,9 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
 import ForgotPasswordModal from "@/components/ForgotPasswordModal";
-import { InputValidator, useInputValidation } from "@/components/security/InputValidator";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -18,13 +16,47 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn, user, loading: authLoading } = useAuth();
-  const { errors, validateField } = useInputValidation();
+
+  // Simple validation function
+  const validateField = (fieldName: string, value: string, type: string) => {
+    const newErrors = { ...errors };
+    
+    if (type === 'email') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value)) {
+        newErrors[fieldName] = 'Email inválido';
+        setErrors(newErrors);
+        return false;
+      }
+    } else if (type === 'password') {
+      if (value.length < 6) {
+        newErrors[fieldName] = 'Senha deve ter pelo menos 6 caracteres';
+        setErrors(newErrors);
+        return false;
+      }
+    }
+    
+    delete newErrors[fieldName];
+    setErrors(newErrors);
+    return true;
+  };
+
+  // Simple input sanitizer
+  const sanitizeText = (text: string) => {
+    return text
+      .replace(/[<>]/g, '')
+      .replace(/javascript:/gi, '')
+      .replace(/on\w+=/gi, '')
+      .trim();
+  };
 
   // Redirect if already logged in
   useEffect(() => {
+    console.log('Login page - user:', user?.id, 'authLoading:', authLoading);
     if (!authLoading && user) {
       navigate("/dashboard");
     }
@@ -32,6 +64,9 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log('Login attempt with:', { email, passwordLength: password.length });
+    
     setIsLoading(true);
 
     // Validate inputs before submission
@@ -44,20 +79,22 @@ const Login = () => {
     }
 
     // Sanitize inputs
-    const sanitizedEmail = InputValidator.sanitizeText(email);
+    const sanitizedEmail = sanitizeText(email);
 
     try {
+      console.log('Calling signIn...');
       const { error } = await signIn(sanitizedEmail, password);
       
       if (error) {
+        console.error('Sign in error:', error);
         // Enhanced error handling for security
         let errorMessage = 'Credenciais inválidas';
         
-        if (error.message.includes('rate limit') || error.message.includes('tentativas')) {
+        if (error.message && error.message.includes('rate limit') || error.message && error.message.includes('tentativas')) {
           errorMessage = error.message;
-        } else if (error.message.includes('Invalid login credentials')) {
+        } else if (error.message && error.message.includes('Invalid login credentials')) {
           errorMessage = 'Email ou senha incorretos';
-        } else if (error.message.includes('Email not confirmed')) {
+        } else if (error.message && error.message.includes('Email not confirmed')) {
           errorMessage = 'Por favor, confirme seu email antes de fazer login';
         }
         
@@ -67,6 +104,7 @@ const Login = () => {
           variant: "destructive",
         });
       } else {
+        console.log('Login successful');
         toast({
           title: "Login realizado com sucesso!",
           description: "Bem-vindo ao AgendoPro",
@@ -74,6 +112,7 @@ const Login = () => {
         // Navigation will be handled by useEffect when user state updates
       }
     } catch (error) {
+      console.error('Unexpected login error:', error);
       toast({
         title: "Erro inesperado",
         description: "Tente novamente em alguns instantes",
@@ -87,6 +126,18 @@ const Login = () => {
   // Don't render login form if user is already authenticated
   if (!authLoading && user) {
     return null;
+  }
+
+  // Show loading if auth is still loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -111,6 +162,7 @@ const Login = () => {
                 placeholder="seu@email.com"
                 required
                 autoComplete="email"
+                disabled={isLoading}
               />
               {errors.email && (
                 <p className="text-sm text-red-600">{errors.email}</p>
@@ -128,6 +180,7 @@ const Login = () => {
                   placeholder="Sua senha"
                   required
                   autoComplete="current-password"
+                  disabled={isLoading}
                 />
                 <Button
                   type="button"
@@ -135,6 +188,7 @@ const Login = () => {
                   size="sm"
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -153,6 +207,7 @@ const Login = () => {
                 type="button"
                 onClick={() => setShowForgotPassword(true)}
                 className="text-sm text-blue-600 hover:underline"
+                disabled={isLoading}
               >
                 Esqueci minha senha
               </button>
@@ -161,7 +216,7 @@ const Login = () => {
             <Button 
               type="submit" 
               className="w-full bg-blue-600 hover:bg-blue-700"
-              disabled={isLoading || authLoading}
+              disabled={isLoading || authLoading || !email || !password}
             >
               {isLoading ? "Entrando..." : "Entrar"}
             </Button>
