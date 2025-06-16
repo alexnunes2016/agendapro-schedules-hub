@@ -49,11 +49,13 @@ const AppRoutes = () => {
 
   return (
     <Routes>
+      {/* Public routes - accessible without authentication */}
       <Route path="/" element={<Index />} />
       <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" replace />} />
       <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" replace />} />
       <Route path="/booking/:userId" element={<BookingPublic />} />
 
+      {/* Protected routes - require authentication */}
       {user ? (
         <>
           {/* Super Admin Routes */}
@@ -90,21 +92,26 @@ const AppRoutes = () => {
               </RoleBasedRoute>
             } 
           />
-          
-          {/* Redirect to appropriate dashboard based on role */}
-          <Route 
-            path="*" 
-            element={
-              <Navigate 
-                to={isSuperAdmin ? "/super-admin" : "/dashboard"} 
-                replace 
-              />
-            } 
-          />
         </>
       ) : (
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        /* Catch-all for unauthenticated users trying to access protected routes */
+        <Route path="/dashboard" element={<Navigate to="/login" replace />} />
       )}
+      
+      {/* Fallback routes */}
+      <Route 
+        path="*" 
+        element={
+          user ? (
+            <Navigate 
+              to={isSuperAdmin ? "/super-admin" : "/dashboard"} 
+              replace 
+            />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        } 
+      />
     </Routes>
   );
 };
