@@ -15,7 +15,8 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react({
       tsDecorators: false,
-      exclude: /\.ts$|\.tsx$/
+      exclude: /\.ts$|\.tsx$/,
+      include: /\.jsx?$/
     }),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
