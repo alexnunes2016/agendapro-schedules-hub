@@ -30,7 +30,8 @@ export default defineConfig(({ mode }) => ({
       loader: {
         '.js': 'jsx',
         '.jsx': 'jsx'
-      }
+      },
+      tsconfig: './tsconfig.custom.json'
     }
   },
   build: {
@@ -52,7 +53,8 @@ export default defineConfig(({ mode }) => ({
     loader: 'jsx',
     include: /src\/.*\.[jt]sx?$/,
     exclude: /\.ts$|\.tsx$/,
-    jsxInject: `import React from 'react'`
+    jsxInject: `import React from 'react'`,
+    tsconfig: './tsconfig.custom.json'
   },
   define: {
     global: 'globalThis',

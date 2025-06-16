@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -71,8 +70,10 @@ export const TenantAuthProvider = ({ children }) => {
           await fetchTenantData(initialSession.user.id);
         }
         
-        setLoading(false);
-        setInitialized(true);
+        if (mounted) {
+          setLoading(false);
+          setInitialized(true);
+        }
       } catch (error) {
         console.error('Error initializing auth:', error);
         if (mounted) {
@@ -84,20 +85,18 @@ export const TenantAuthProvider = ({ children }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (!mounted) return;
+        if (!mounted || !initialized) return;
         
         console.log('Auth state changed:', event, session?.user?.id || 'No user');
         
-        if (initialized) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user && event !== 'SIGNED_OUT') {
-            await fetchTenantData(session.user.id);
-          } else {
-            setTenant(null);
-            setTenantUser(null);
-          }
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user && event !== 'SIGNED_OUT') {
+          await fetchTenantData(session.user.id);
+        } else {
+          setTenant(null);
+          setTenantUser(null);
         }
       }
     );
@@ -108,7 +107,7 @@ export const TenantAuthProvider = ({ children }) => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [initialized]);
+  }, []);
 
   const fetchTenantData = async (userId) => {
     try {
