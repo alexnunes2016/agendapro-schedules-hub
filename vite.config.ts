@@ -13,36 +13,13 @@ export default defineConfig(({ mode }) => ({
     historyApiFallback: true
   },
   plugins: [
-    react({
-      tsDecorators: true
-    }),
+    react(),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  },
-  optimizeDeps: {
-    include: ['jspdf', 'jspdf-autotable']
-  },
-  build: {
-    target: 'esnext',
-    minify: 'esbuild',
-    sourcemap: false,
-    rollupOptions: {
-      external: [],
-      output: {
-        manualChunks: undefined
-      }
-    }
-  },
-  esbuild: {
-    target: 'esnext',
-    logOverride: { 
-      'this-is-undefined-in-esm': 'silent'
-    },
-    tsconfig: path.resolve(__dirname, './tsconfig.custom.json')
   },
   define: {
     global: 'globalThis',

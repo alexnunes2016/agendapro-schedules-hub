@@ -1,21 +1,19 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 interface Profile {
   id: string;
   name: string;
   email: string;
+  phone?: string;
+  avatar_url?: string;
+  plan: string;
   clinic_name?: string;
-  service_type?: string;
-  plan?: string;
-  role?: string;
-  is_active?: boolean;
-  email_confirmed?: boolean;
-  created_at?: string;
-  updated_at?: string;
+  specialty?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 interface AuthContextType {
@@ -53,128 +51,67 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
-    let mounted = true;
-
-    const initializeAuth = async () => {
-      try {
-        console.log('Initializing auth...');
-        
-        // Get initial session
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          if (mounted) {
-            setLoading(false);
-            setInitialized(true);
-          }
-          return;
-        }
-        
-        if (!mounted) return;
-        
-        console.log('Initial session:', initialSession?.user?.id || 'No session');
-        
-        setSession(initialSession);
-        setUser(initialSession?.user ?? null);
-        
-        if (initialSession?.user) {
-          await fetchProfile(initialSession.user.id);
-        }
-        
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
         setLoading(false);
-        setInitialized(true);
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-        if (mounted) {
-          setLoading(false);
-          setInitialized(true);
-        }
       }
-    };
+    });
 
-    // Set up auth state listener
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (!mounted) return;
-        
-        console.log('Auth state changed:', event, session?.user?.id || 'No user');
-        
-        // Only update state if already initialized to prevent loops
-        if (initialized) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user && event !== 'SIGNED_OUT') {
-            await fetchProfile(session.user.id);
-          } else {
-            setProfile(null);
-          }
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        } else {
+          setProfile(null);
+          setLoading(false);
         }
       }
     );
 
-    initializeAuth();
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [initialized]);
+    return () => subscription.unsubscribe();
+  }, []);
 
   const fetchProfile = async (userId: string) => {
     try {
-      console.log('Fetching profile for user:', userId);
-      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+      if (error && error.code !== 'PGRST116') {
         console.error('Error fetching profile:', error);
         return;
       }
       
       if (data) {
-        console.log('Profile loaded:', data.name);
         setProfile(data);
-      } else {
-        console.log('No profile found for user');
-        setProfile(null);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('signIn called with:', { email, passwordLength: password?.length });
       setLoading(true);
       
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
-      console.log('signIn response:', { data: data?.user?.id, error });
-
-      if (error) {
-        console.error('Sign in error:', error);
-        toast({
-          title: "Erro no login",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        console.log('Sign in successful');
-      }
 
       return { error };
     } catch (error) {
@@ -199,20 +136,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           data: userData
         }
       });
-
-      if (error) {
-        console.error('Sign up error:', error);
-        toast({
-          title: "Erro no cadastro",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Cadastro realizado",
-          description: "Verifique seu email para confirmar a conta.",
-        });
-      }
 
       return { error };
     } catch (error) {
@@ -250,20 +173,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Refresh profile data
       await fetchProfile(user.id);
-      
-      toast({
-        title: "Perfil atualizado",
-        description: "Suas informações foram salvas com sucesso.",
-      });
 
       return { error: null };
     } catch (error) {
       console.error('Update profile error:', error);
-      toast({
-        title: "Erro ao atualizar perfil",
-        description: "Não foi possível salvar as alterações.",
-        variant: "destructive",
-      });
       return { error };
     }
   };
